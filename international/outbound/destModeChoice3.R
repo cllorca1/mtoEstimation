@@ -28,7 +28,7 @@ choice = data.frame(estimatedCombinedZone = choiceVector)
 
 wideData <- cbind(wideData,choice)
 
-wideData$estimatedCombinedZone = choice$estimatedCombinedZone #if already created
+#wideData$estimatedCombinedZone = choice$estimatedCombinedZone #if already created
 
 ##agregate estimations by OD pair and destination
 estimations <- wideData %>% group_by(combinedZone, estimatedCombinedZone) %>%  summarise(estimatedTrips = sum(weight))
@@ -45,6 +45,7 @@ comparisonByDest <-full_join(estimationsByDest, observationsByDest, by=c("estima
 comparison[is.na(comparison)] <- 0
 comparisonByDest[is.na(comparisonByDest)] <- 0
 
+summary(lm(observedTrips~estimatedTrips, data = comparison))$r.squared
 
 #getting trips per day
 comparison$estimatedTrips = comparison$estimatedTrips/365

@@ -112,7 +112,9 @@ modeChoiceCoefs = as.list(model2$coefficients)
 #longData <-read.csv("processed/longDataLeisure.csv")
 
 longData <- subset(longData, alt!=125 & modeChoice != "9") #option for leisure
+longData <- subset(longData, alt!=125 & alt!=121 & alt!=129 & alt!=133& modeChoice != "9") #option for leisure from Ontario
 wideData = subset (wideData, alt!=125)
+wideData = subset (wideData, alt!=125 & alt!=121 & alt!=129 & alt!=133)
 
 #add overnight
 longData$overnight = 1
