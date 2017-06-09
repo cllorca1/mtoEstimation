@@ -247,6 +247,6 @@ summary(model2)
 
 library(ggplot2)
 
-ggplot(dataTripsToUS, aes(x=price.bus)) + geom_histogram() 
+ggplot(dataTripsToUS, aes(x=price.bus)) + geom_histogram()
 ggplot(dataTripsToUS, aes(x=tt.auto, y=tt.bus)) + geom_point() 
 ggplot(dataTripsToUS, aes(x=tt.auto, y=tt.rail)) + geom_point() 
