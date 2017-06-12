@@ -6,6 +6,7 @@
 
 library(mlogit)
 library(mnlogit)
+library(data.table)
 
 #set wd -------------------------------------------------------------------------------------------------
 
@@ -17,6 +18,7 @@ fileNames = c("Leisure", "Business", "visit")
 
 #temporary - use only leisure
 longData = read.csv("processed/longDataLeisure.csv")
+longData = fread("processed/longDataLeisure.csv",header = T, sep = ',')
 wideData = read.csv("processed/wideDataLeisure.csv")
 
 
@@ -38,7 +40,8 @@ wideData$price.bus[is.na(wideData$price.bus)] <- max(wideData$price.bus, na.rm =
 wideData$price.rail[is.na(wideData$price.rail)] <- max(wideData$price.rail, na.rm = TRUE)
 
 #auto prices
-wideData$price.auto = wideData$td*0.072 
+#do not need because it was done in a previous step
+#wideData$price.auto = wideData$td*0.072 
 
 #discard mode 9
 wideData = subset(wideData, modeChoice != "9")
@@ -96,7 +99,7 @@ formula1 = mFormula(modeChoice ~ 1 | 1 | 1 )
 
 formula1 = mFormula(modeChoice ~  gTime + onAuto + partySizeAuto | 1 | 1 )
 
-formula1 = mFormula(modeChoice ~  exp(-0.0015*gTime)  +onAuto + partySizeAuto | 1 | 1 ) # selected for leisure so far!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+formula1 = mFormula(modeChoice ~  exp(-0.0015*gTime)  + onAuto + partySizeAuto | 1 | 1 ) # selected for leisure so far!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 formula1 = mFormula(modeChoice ~  exp(-0.0008*onGTime) + exp(-0.01*dtGTime) + onAuto + partySizeAuto | 1 | 1 ) 
 
@@ -154,7 +157,7 @@ longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' + modeChoiceCoefs$gTime 
 longData$logsumRail = modeChoiceCoefs$`(Intercept):2rail` + modeChoiceCoefs$gTime * (longData$tt.rail + 60 * longData$price.rail/32)
 longData$logsumBus = modeChoiceCoefs$`(Intercept):3bus` + modeChoiceCoefs$gTime * (longData$tt.bus + 60 * longData$price.rail/32)
 
-#alt if using exponential gTime
+#alt if using exponential gTime #selected so far for leisure !!!!!!!!!!!!!!
 longData$logsumAuto = 0 + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015* (longData$tt.auto + 60 * longData$price.auto/32))  + modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$partySize
 longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' + modeChoiceCoefs$`exp(-0.0015 * gTime)` *exp(-0.0015* (longData$tt.air + 60 * longData$price.air/32))
 longData$logsumRail = modeChoiceCoefs$`(Intercept):2rail` + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015*(longData$tt.rail + 60 * longData$price.rail/32))

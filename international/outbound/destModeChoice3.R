@@ -69,3 +69,4 @@ for (i in 1:nrow(comparison)){
 write.csv(comparison, "output/model0LeisureResultsByod.csv")
 write.csv(comparison, "output/model0LeisureResultsByodFromOntario.csv")
 write.csv(comparison, "output/model0LeisureResultsByodFromOntarioByDuration.csv")
+write.csv(comparison, "output/model0LeisureResultsByodFromOntarioByDurationReAggr.csv")

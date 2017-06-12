@@ -56,11 +56,12 @@ source("C:/code/omx/api/r/omx.R")
 
 #mode specific as a list of matrices
 matrixName =  c("air", "auto", "bus", "rail")
-newFileName = c("input/transitTTModelEst.omx", "input/transitPriceModelEst.omx", "input/transitFreqModelEst.omx", "input/transitTransModelEst.omx")
+newFileName = c("input/transitTTModelEstV2.omx", "input/transitPriceModelEstV2.omx", "input/transitFreqModelEstV2.omx", "input/transitTransModelEstV2.omx")
+#newFileName = c("transitTTModelEst.omx", "transitPriceModelEst.omx", "transitFreqModelEst.omx", "transitTransModelEst.omx")
 variableName = c("tt", "price", "freq", "transf")
 
 #travel distance by car as matrix
-tdMatrix <-readMatrixOMX("input/combinedDistanceNAModelEst.omx", "auto_distance")
+tdMatrix <-readMatrixOMX("input/combinedDistanceNAModelEstV2.omx", "auto_distance")
 
 #Now we only have tt an price for mode-specific data
 matrixAutoTt<-readMatrixOMX(newFileName[1], matrixName[2])
@@ -105,9 +106,9 @@ for (i in 1:nrow(dataTripsToUS)){
       choice = TRUE
     }
     #add here the distance from omx matrix and all mode specific variables
-    
+    #add here the price by car 
     row<-c(trip, alt = zone$combinedZone, choice = choice, td = dist, tt.auto = ttAuto, tt.air = ttAir,
-           tt.bus = ttBus, tt.rail= ttRail, price.auto = priceAuto, price.air = priceAir, price.bus = priceBus, price.rail = priceRail, zone)
+           tt.bus = ttBus, tt.rail= ttRail, price.auto = dist*0.072, price.air = priceAir, price.bus = priceBus, price.rail = priceRail, zone)
     #write.table(row, file="longData.csv", append = TRUE, col.names = FALSE, sep="," )
     alternatives<-rbind(alternatives, row)
   }
