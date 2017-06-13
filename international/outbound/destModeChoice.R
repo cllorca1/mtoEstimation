@@ -4,9 +4,14 @@
 #Carlos Llorca 08.06.17
 #
 
+
+
+#
+# FOR CANADIAN#
+#
 # set WD-----------------------------------------------------------------------------------------------------------------
 
-setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/canadian")
+setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/canadian") 
 
 # read ITS data ---------------------------------------------------
 #the data has already level2 zone in Canadian zones
@@ -36,7 +41,6 @@ oldCodes = seq(0, 9, by=1)
 choices = c(1,2,5,9,4,1,1,2,9,9)
 choicesString = c("auto","air","rail",9,"bus","auto","auto","air",9,9)
 choicesCode = c("0","1","2","9","3","0","0","1","9","9")
-
 dataTripsToUS$modeChoice = 0
 dataTripsToUS$modeChoiceString = 0
 for (i in 1:nrow(dataTripsToUS)){
@@ -44,6 +48,40 @@ for (i in 1:nrow(dataTripsToUS)){
   dataTripsToUS$modeChoice[i] = choicesString[which(oldCodes == dataTripsToUS$entryMode[i])]
   #print(i)
 }
+
+
+#
+#FOR US RESIDENTS
+#
+
+setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/visitors") 
+dataFromUS <- read.csv("input/itsDataVis1112CombinedFromUS.csv")
+
+#this can be confusing, but it is useful not to rewrtie the name of the data frame
+dataTripsToUS = dataFromUS
+
+oldCodes = seq(0, 9, by=1)
+choices = c(1,2,5,9,4,1,1,2,9,9)
+choicesString = c("auto","air","rail",9,"bus","auto","auto","air",9,9)
+choicesCode = c("0","1","2","9","3","0","0","1","9","9")
+dataTripsToUS$modeChoice = 0
+dataTripsToUS$modeChoiceString = 0
+for (i in 1:nrow(dataTripsToUS)){
+  #dataTripsToUS$destZone[i] = usZoneList[which(usStateList==dataTripsToUS$state[i])]
+  dataTripsToUS$modeChoice[i] = choicesString[which(oldCodes == dataTripsToUS$entryMode[i])]
+  #print(i)
+}
+
+combinedZoneList <- read.csv("input/destinationAlternatives.csv")
+combinedZoneList = combinedZoneList[order(combinedZoneList$alt),]
+usCombinedZoneList = combinedZoneList
+
+
+#
+# FOR ALL TRAVELLERS EITHER CAN OR US
+#
+
+
 
 #last transformation of mode choice vairbale to get the right order in mnlogit models - probably not needed
 dataTripsToUS$modeChoiceString[dataTripsToUS$modeChoice=="air"] = "1air"
@@ -53,6 +91,8 @@ dataTripsToUS$modeChoiceString[dataTripsToUS$modeChoice=="rail"] = "2rail"
 
 # read OMX  -----------------------------------------------------------------------------------------------------------------
 source("C:/code/omx/api/r/omx.R")
+
+#for visitors you have to change the wd various time, to get omx matrices that are on residents' folder
 
 #mode specific as a list of matrices
 matrixName =  c("air", "auto", "bus", "rail")
@@ -74,6 +114,8 @@ matrixAirPrice<-readMatrixOMX(newFileName[2], matrixName[1])
 matrixBusPrice<-readMatrixOMX(newFileName[2], matrixName[3])
 matrixRailPrice<-readMatrixOMX(newFileName[2], matrixName[4])
 
+dataTripsToUS = dataTripsToUS[order(dataTripsToUS$combinedZone),]
+
 #long format -----------------------------------------------------------------------------------------------------
 write.table(t(c(names(dataTripsToUS), "alt", "choice" ,"td","tt.auto", "tt.air", "tt.bus", "tt.rail", "price.auto", "price.air", "price.bus", "price.rail", 
                 names(usCombinedZoneList))), "processed/longData.csv", col.names = FALSE , sep = ",", row.names = FALSE)
@@ -81,6 +123,8 @@ for (i in 1:nrow(dataTripsToUS)){
 #for (i in 1:10){ # for testing read only 10 lines
   trip <-dataTripsToUS[i,]
   alternatives <-data.frame()
+  l = list()
+  length(l)=length(usCombinedZoneList)
   #loop through all the destinations
   for (j in 1:nrow(usCombinedZoneList)){
     zone <-usCombinedZoneList[j,]
@@ -110,8 +154,11 @@ for (i in 1:nrow(dataTripsToUS)){
     row<-c(trip, alt = zone$combinedZone, choice = choice, td = dist, tt.auto = ttAuto, tt.air = ttAir,
            tt.bus = ttBus, tt.rail= ttRail, price.auto = dist*0.072, price.air = priceAir, price.bus = priceBus, price.rail = priceRail, zone)
     #write.table(row, file="longData.csv", append = TRUE, col.names = FALSE, sep="," )
-    alternatives<-rbind(alternatives, row)
+    #alternatives<-rbind(alternatives, row)
+    l[[j]] = row
+    
   }
+  alternatives = rbindlist(l)
   write.table(alternatives, file="processed/longData.csv", append = TRUE, col.names = FALSE, sep="," , row.names = FALSE)
   print (paste("trip:", i , sep = " "))
   #longData<-rbind(longData, alternatives)

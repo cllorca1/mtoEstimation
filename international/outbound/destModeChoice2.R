@@ -21,6 +21,12 @@ longData = read.csv("processed/longDataLeisure.csv")
 longData = fread("processed/longDataLeisure.csv",header = T, sep = ',')
 wideData = read.csv("processed/wideDataLeisure.csv")
 
+longData = fread("processed/longDataBusiness.csv",header = T, sep = ',')
+wideData = read.csv("processed/wideDataBusiness.csv")
+
+longData = fread("processed/longDataVisit.csv",header = T, sep = ',')
+wideData = read.csv("processed/wideDataVisit.csv")
+
 
 #this filters only from Ontario
 longData = subset(longData, origProv ==35)
@@ -29,7 +35,7 @@ wideData = subset(wideData, origProv ==35)
 
 #mode choice re-preparation--------------------------------------------------------------------------------------------
 
-#substitute NA by change
+#substitute NA by changing to the maximum recorded value in the column
 wideData$tt.air[is.na(wideData$tt.air)] <- max(wideData$tt.air, na.rm = TRUE)
 wideData$tt.auto[is.na(wideData$tt.auto)] <- max(wideData$tt.auto, na.rm = TRUE)
 wideData$tt.bus[is.na(wideData$tt.bus)] <- max(wideData$tt.bus, na.rm = TRUE)
@@ -39,12 +45,23 @@ wideData$price.air[is.na(wideData$price.air)] <- max(wideData$price.air, na.rm =
 wideData$price.bus[is.na(wideData$price.bus)] <- max(wideData$price.bus, na.rm = TRUE)
 wideData$price.rail[is.na(wideData$price.rail)] <- max(wideData$price.rail, na.rm = TRUE)
 
+#testing the effect of changing the maximum values
+# wideData$tt.air[is.na(wideData$tt.air)] <- 1e10
+# wideData$tt.auto[is.na(wideData$tt.auto)] <- 1e10
+# wideData$tt.bus[is.na(wideData$tt.bus)] <- 1e10
+# wideData$tt.rail[is.na(wideData$tt.rail)] <- 1e10
+# 
+# wideData$price.air[is.na(wideData$price.air)] <- 1e10
+# wideData$price.bus[is.na(wideData$price.bus)] <- 1e10
+# wideData$price.rail[is.na(wideData$price.rail)] <- 1e10
+
 #auto prices
 #do not need because it was done in a previous step
 #wideData$price.auto = wideData$td*0.072 
 
 #discard mode 9
 wideData = subset(wideData, modeChoice != "9")
+longData = subset(longData, modeChoice != "9")
 
 #create overnight-variable
 wideData$overnight = 1
@@ -66,8 +83,11 @@ dataModelMn$modeChoiceString[dataModelMn$alt=="rail"] = "2rail"
 dataModelMn$modeChoiceString = as.factor(dataModelMn$modeChoiceString)
 
 #vot
-dataModelMn$gTime = dataModelMn$tt + 60 * dataModelMn$price/ 32 #for visit and leisure.
-#dataModelMn$gTime = dataModelMn$tt + 60 * dataModelMn$price/ 65 #for business
+vot = 32 #for visit and leisure.
+vot = 65 #for business
+
+dataModelMn$gTime = dataModelMn$tt + 60 * dataModelMn$price/ vot 
+dataModelMn$gTime = dataModelMn$tt + 60 * dataModelMn$price/ vot 
 
 #dummy for each mode
 dataModelMn$isAuto = 0
@@ -90,8 +110,8 @@ dataModelMn$partySizeBus = dataModelMn$isBus * dataModelMn$partySize
 dataModelMn$partySizeAuto = dataModelMn$isAuto * dataModelMn$partySize
 
 
-dataModelMn$onGTime = dataModelMn$tt * dataModelMn$overnight + 60 * dataModelMn$price/ 32 
-dataModelMn$dtGTime = dataModelMn$tt * (1- dataModelMn$overnight)  + 60 * dataModelMn$price/ 32 
+dataModelMn$onGTime = dataModelMn$tt * dataModelMn$overnight + 60 * dataModelMn$price/ vot 
+dataModelMn$dtGTime = dataModelMn$tt * (1- dataModelMn$overnight)  + 60 * dataModelMn$price/ vot 
 
 #mode choice estimation-----------------------------------------------------------------------------------------
 
@@ -99,9 +119,11 @@ formula1 = mFormula(modeChoice ~ 1 | 1 | 1 )
 
 formula1 = mFormula(modeChoice ~  gTime + onAuto + partySizeAuto | 1 | 1 )
 
-formula1 = mFormula(modeChoice ~  exp(-0.0015*gTime)  + onAuto + partySizeAuto | 1 | 1 ) # selected for leisure so far!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+formula1 = mFormula(modeChoice ~  exp(-0.0015*gTime)  + onAuto + partySizeAuto | 1 | 1 ) # selected !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 formula1 = mFormula(modeChoice ~  exp(-0.0008*onGTime) + exp(-0.01*dtGTime) + onAuto + partySizeAuto | 1 | 1 ) 
+
+
 
 model2 = mnlogit(formula1, dataModelMn, choiceVar = "modeChoiceString", print.level = 2, weights = weightsMnlogit, ncores=16)
 summary(model2)
@@ -116,8 +138,11 @@ modeChoiceCoefs = as.list(model2$coefficients)
 
 longData <- subset(longData, alt!=125 & modeChoice != "9") #option for leisure
 longData <- subset(longData, alt!=125 & alt!=121 & alt!=129 & alt!=133& modeChoice != "9") #option for leisure from Ontario
-wideData = subset (wideData, alt!=125)
-wideData = subset (wideData, alt!=125 & alt!=121 & alt!=129 & alt!=133)
+#do nothing for business from Ontario
+longData <- subset(longData, alt!=121 & alt!=125 & alt!=143 & modeChoice != "9") #option for leisure from Ontario
+wideData = subset (wideData, alt!=125) #option for leisure
+wideData = subset (wideData, alt!=121 & alt!=125 & alt!=143 & modeChoice != "9") #option for leisure from Ontario
+#do nothing for business from Ontario
 
 #add overnight
 longData$overnight = 1
@@ -152,31 +177,31 @@ longData$price.air[is.na(longData$price.air)] <- max(longData$price.air, na.rm =
 longData$price.bus[is.na(longData$price.bus)] <- max(longData$price.bus, na.rm = TRUE)
 longData$price.rail[is.na(longData$price.rail)] <- max(longData$price.rail, na.rm = TRUE)
 
-longData$logsumAuto = 0 + modeChoiceCoefs$gTime * (longData$tt.auto + 60 * longData$price.auto/32)  + modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$partySize
-longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' + modeChoiceCoefs$gTime * (longData$tt.air + 60 * longData$price.air/32)
-longData$logsumRail = modeChoiceCoefs$`(Intercept):2rail` + modeChoiceCoefs$gTime * (longData$tt.rail + 60 * longData$price.rail/32)
-longData$logsumBus = modeChoiceCoefs$`(Intercept):3bus` + modeChoiceCoefs$gTime * (longData$tt.bus + 60 * longData$price.rail/32)
+longData$logsumAuto = 0 + modeChoiceCoefs$gTime * (longData$tt.auto + 60 * longData$price.auto/vot)  + modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$partySize
+longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' + modeChoiceCoefs$gTime * (longData$tt.air + 60 * longData$price.air/vot)
+longData$logsumRail = modeChoiceCoefs$`(Intercept):2rail` + modeChoiceCoefs$gTime * (longData$tt.rail + 60 * longData$price.rail/vot)
+longData$logsumBus = modeChoiceCoefs$`(Intercept):3bus` + modeChoiceCoefs$gTime * (longData$tt.bus + 60 * longData$price.rail/vot)
 
 #alt if using exponential gTime #selected so far for leisure !!!!!!!!!!!!!!
-longData$logsumAuto = 0 + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015* (longData$tt.auto + 60 * longData$price.auto/32))  + modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$partySize
-longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' + modeChoiceCoefs$`exp(-0.0015 * gTime)` *exp(-0.0015* (longData$tt.air + 60 * longData$price.air/32))
-longData$logsumRail = modeChoiceCoefs$`(Intercept):2rail` + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015*(longData$tt.rail + 60 * longData$price.rail/32))
-longData$logsumBus = modeChoiceCoefs$`(Intercept):3bus` + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015*(longData$tt.bus + 60 * longData$price.rail/32))
+longData$logsumAuto = 0 + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015* (longData$tt.auto + 60 * longData$price.auto/vot))  + modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$partySize
+longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' + modeChoiceCoefs$`exp(-0.0015 * gTime)` *exp(-0.0015* (longData$tt.air + 60 * longData$price.air/vot))
+longData$logsumRail = modeChoiceCoefs$`(Intercept):2rail` + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015*(longData$tt.rail + 60 * longData$price.rail/vot))
+longData$logsumBus = modeChoiceCoefs$`(Intercept):3bus` + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015*(longData$tt.bus + 60 * longData$price.rail/vot))
 
 #alt if using exponential gTime * daytrip
 longData$logsumAuto = 0 +
-  modeChoiceCoefs$`exp(-8e-04 * onGTime)` * exp(-0.0008* (longData$tt.auto * longData$overnight+ 60 * longData$price.auto/32))  +
-  modeChoiceCoefs$`exp(-0.01 * dtGTime)` * exp(-0.01* (longData$tt.auto* (1- longData$overnight) + 60 * longData$price.auto/32))  +
+  modeChoiceCoefs$`exp(-8e-04 * onGTime)` * exp(-0.0008* (longData$tt.auto * longData$overnight+ 60 * longData$price.auto/vot))  +
+  modeChoiceCoefs$`exp(-0.01 * dtGTime)` * exp(-0.01* (longData$tt.auto* (1- longData$overnight) + 60 * longData$price.auto/vot))  +
   modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$partySize
 longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' +
-  modeChoiceCoefs$`exp(-8e-04 * onGTime)` *exp(-0.0008* (longData$tt.air * longData$overnight + 60 * longData$price.air/32))+
-  modeChoiceCoefs$`exp(-0.01 * dtGTime)` *exp(-0.01* (longData$tt.air* (1- longData$overnight) + 60 * longData$price.air/32))  
+  modeChoiceCoefs$`exp(-8e-04 * onGTime)` *exp(-0.0008* (longData$tt.air * longData$overnight + 60 * longData$price.air/vot))+
+  modeChoiceCoefs$`exp(-0.01 * dtGTime)` *exp(-0.01* (longData$tt.air* (1- longData$overnight) + 60 * longData$price.air/vot))  
 longData$logsumRail = modeChoiceCoefs$`(Intercept):2rail` + 
-  modeChoiceCoefs$`exp(-8e-04 * onGTime)` *exp(-0.0008* (longData$tt.rail * longData$overnight + 60 * longData$price.rail/32)) +
-  modeChoiceCoefs$`exp(-0.01 * dtGTime)` *exp(-0.01* (longData$tt.rail * (1- longData$overnight)  + 60 * longData$price.rail/32)) 
+  modeChoiceCoefs$`exp(-8e-04 * onGTime)` *exp(-0.0008* (longData$tt.rail * longData$overnight + 60 * longData$price.rail/vot)) +
+  modeChoiceCoefs$`exp(-0.01 * dtGTime)` *exp(-0.01* (longData$tt.rail * (1- longData$overnight)  + 60 * longData$price.rail/vot)) 
 longData$logsumBus = modeChoiceCoefs$`(Intercept):3bus` +
-  modeChoiceCoefs$`exp(-8e-04 * onGTime)` *exp(-0.0008* (longData$tt.bus * longData$overnight + 60 * longData$price.bus/32)) +
-  modeChoiceCoefs$`exp(-0.01 * dtGTime)` *exp(-0.01* (longData$tt.bus  * (1- longData$overnight)+ 60 * longData$price.bus/32))  
+  modeChoiceCoefs$`exp(-8e-04 * onGTime)` *exp(-0.0008* (longData$tt.bus * longData$overnight + 60 * longData$price.bus/vot)) +
+  modeChoiceCoefs$`exp(-0.01 * dtGTime)` *exp(-0.01* (longData$tt.bus  * (1- longData$overnight)+ 60 * longData$price.bus/vot))  
 
 #get 4mode logsum
 longData$logsum = log(exp(longData$logsumAuto) + exp(longData$logsumAir) + exp(longData$logsumRail) + exp(longData$logsumBus))
@@ -190,7 +215,7 @@ longData$onLogsum = longData$overnight*longData$logsum
 #dest choice w/logsum ---------------------------------------------------------------------------------------------------
 
 fm <- formula(choice~ population + logsum |0|0)
-fm <- formula(choice~ population + dtLogsum + onLogsum|0|0) # selected for leisure so far!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+fm <- formula(choice~ population + dtLogsum + onLogsum|0|0) # selected !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 model0 <- mnlogit(fm, longData, choiceVar = "alt", weights = weightListDest,  ncores=16, print.level = 2)
