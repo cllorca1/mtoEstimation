@@ -4,7 +4,7 @@
 #Carlos Llorca 08.06.17
 #
 
-
+library(data.table)
 
 #
 # FOR CANADIAN#
@@ -114,17 +114,21 @@ matrixAirPrice<-readMatrixOMX(newFileName[2], matrixName[1])
 matrixBusPrice<-readMatrixOMX(newFileName[2], matrixName[3])
 matrixRailPrice<-readMatrixOMX(newFileName[2], matrixName[4])
 
+#maybe not needed?
 dataTripsToUS = dataTripsToUS[order(dataTripsToUS$combinedZone),]
 
 #long format -----------------------------------------------------------------------------------------------------
 write.table(t(c(names(dataTripsToUS), "alt", "choice" ,"td","tt.auto", "tt.air", "tt.bus", "tt.rail", "price.auto", "price.air", "price.bus", "price.rail", 
                 names(usCombinedZoneList))), "processed/longData.csv", col.names = FALSE , sep = ",", row.names = FALSE)
+longData = data.frame()
+list1 = list()
+length(list1)=nrow(dataTripsToUS)
 for (i in 1:nrow(dataTripsToUS)){
 #for (i in 1:10){ # for testing read only 10 lines
   trip <-dataTripsToUS[i,]
   alternatives <-data.frame()
   l = list()
-  length(l)=length(usCombinedZoneList)
+  length(l)=nrow(usCombinedZoneList)
   #loop through all the destinations
   for (j in 1:nrow(usCombinedZoneList)){
     zone <-usCombinedZoneList[j,]
@@ -159,10 +163,15 @@ for (i in 1:nrow(dataTripsToUS)){
     
   }
   alternatives = rbindlist(l)
-  write.table(alternatives, file="processed/longData.csv", append = TRUE, col.names = FALSE, sep="," , row.names = FALSE)
+  #write.table(alternatives, file="processed/longData.csv", append = TRUE, col.names = FALSE, sep="," , row.names = FALSE)
+  #fwrite(x=alternatives, file="processed/longData.csv", append = TRUE, col.names = FALSE, sep="," , row.names = FALSE)
+  list1[[i]] = alternatives
+  
   print (paste("trip:", i , sep = " "))
   #longData<-rbind(longData, alternatives)
 }
+longData = rbindlist(list1)
+fwrite(x=longData, file="processed/longData.csv", append = TRUE, col.names = FALSE, sep="," , row.names = FALSE)
 
 
 #data is already stored in the longData.csv file
@@ -173,7 +182,7 @@ for (i in 1:nrow(dataTripsToUS)){
 longData = read.csv("processed/longData.csv")
 wideData = subset(longData, choice == TRUE)
 
-write.csv(data = wideData, file = "processed/wideData.csv", row.names = FALSE)
+write.csv(x = wideData, file = "processed/wideData.csv", row.names = FALSE)
 
 
 

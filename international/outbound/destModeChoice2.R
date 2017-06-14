@@ -11,13 +11,14 @@ library(data.table)
 #set wd -------------------------------------------------------------------------------------------------
 
 setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/canadian")
+setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/visitors")
 
 #read data ----------------------------------------------------------------------------------------------
 
 fileNames = c("Leisure", "Business", "visit")
 
 #temporary - use only leisure
-longData = read.csv("processed/longDataLeisure.csv")
+#longData = read.csv("processed/longDataLeisure.csv")
 longData = fread("processed/longDataLeisure.csv",header = T, sep = ',')
 wideData = read.csv("processed/wideDataLeisure.csv")
 
@@ -29,8 +30,16 @@ wideData = read.csv("processed/wideDataVisit.csv")
 
 
 #this filters only from Ontario
-longData = subset(longData, origProv ==35)
-wideData = subset(wideData, origProv ==35)
+longData = subset(longData, origProv ==35) #outbound
+wideData = subset(wideData, origProv ==35) #outbound
+
+
+longData = subset(longData, destPR ==35) #inbound
+wideData = subset(wideData, destPR ==35) #inbound
+
+#modal shares
+total = sum(wideData$weight)
+wideData %>% group_by(modeChoice) %>% summarize(trips = sum(weight)/total)
 
 
 #mode choice re-preparation--------------------------------------------------------------------------------------------
@@ -72,7 +81,9 @@ wideData$modeChoice = as.factor(as.character(wideData$modeChoice))
 
 #weight vector for mnlogit
 weightsMnlogit = wideData$weight
-dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = 26:33)
+dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = 26:33) #outbound dataset
+dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = 31:38) #inbound dataset
+dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = c(31:33, 35:37)) #inbound dataset for business - no one chose rail
 
 #need to re-convert modeChoiceString because it was wrong taken from long-data transformation
 dataModelMn$modeChoiceString[dataModelMn$alt=="air"] = "1air"
@@ -87,7 +98,7 @@ vot = 32 #for visit and leisure.
 vot = 65 #for business
 
 dataModelMn$gTime = dataModelMn$tt + 60 * dataModelMn$price/ vot 
-dataModelMn$gTime = dataModelMn$tt + 60 * dataModelMn$price/ vot 
+
 
 #dummy for each mode
 dataModelMn$isAuto = 0
@@ -105,9 +116,13 @@ dataModelMn$isRail[dataModelMn$alt=="rail"] = 1
 dataModelMn$onAir = dataModelMn$isAir * dataModelMn$overnight
 dataModelMn$onBus = dataModelMn$isBus * dataModelMn$overnight
 dataModelMn$onAuto = dataModelMn$isAuto * dataModelMn$overnight
-dataModelMn$partySizeAir = dataModelMn$isAir * dataModelMn$partySize
+dataModelMn$partySizeAir = dataModelMn$isAir * dataModelMn$partySize #outbound
 dataModelMn$partySizeBus = dataModelMn$isBus * dataModelMn$partySize
 dataModelMn$partySizeAuto = dataModelMn$isAuto * dataModelMn$partySize
+
+dataModelMn$partySizeAir = dataModelMn$isAir * dataModelMn$travelParty #inbound
+dataModelMn$partySizeBus = dataModelMn$isBus * dataModelMn$travelParty
+dataModelMn$partySizeAuto = dataModelMn$isAuto * dataModelMn$travelParty
 
 
 dataModelMn$onGTime = dataModelMn$tt * dataModelMn$overnight + 60 * dataModelMn$price/ vot 
@@ -138,7 +153,11 @@ modeChoiceCoefs = as.list(model2$coefficients)
 
 longData <- subset(longData, alt!=125 & modeChoice != "9") #option for leisure
 longData <- subset(longData, alt!=125 & alt!=121 & alt!=129 & alt!=133& modeChoice != "9") #option for leisure from Ontario
+longData <- subset(longData, alt!=3 & alt!=34 & alt!=60 & alt<70 & modeChoice != "9") #option for leisure from US
+
+longData <- subset(longData, alt!=8 & alt!=9 & alt!=10 & alt!=33 &  alt!=32 & alt!=34 & alt!= 46 & alt!=55 & alt!=59 & alt!=60 &alt!=63& alt<70 & modeChoice != "9") #option for business from US
 #do nothing for business from Ontario
+
 longData <- subset(longData, alt!=121 & alt!=125 & alt!=143 & modeChoice != "9") #option for leisure from Ontario
 wideData = subset (wideData, alt!=125) #option for leisure
 wideData = subset (wideData, alt!=121 & alt!=125 & alt!=143 & modeChoice != "9") #option for leisure from Ontario
@@ -158,6 +177,8 @@ longData$utdOvernight = longData$overnight * exp(-0.0001*longData$td)
 #dest choice independent estimation-----------------------------------------------------------------------------------
 
 fm <- formula(choice~ population + utdDaytrip + utdOvernight|0|0)
+longData$civic = longData$population + longData$employment
+fm <- formula(choice~ civic + hotel + skiing + alt_is_metro + utdDaytrip + utdOvernight|0|0)
 
 model0 <- mnlogit(fm, longData, choiceVar = "alt", weights = weightListDest,  ncores=16, print.level = 2)
 summary(model0)
@@ -178,12 +199,14 @@ longData$price.bus[is.na(longData$price.bus)] <- max(longData$price.bus, na.rm =
 longData$price.rail[is.na(longData$price.rail)] <- max(longData$price.rail, na.rm = TRUE)
 
 longData$logsumAuto = 0 + modeChoiceCoefs$gTime * (longData$tt.auto + 60 * longData$price.auto/vot)  + modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$partySize
+
 longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' + modeChoiceCoefs$gTime * (longData$tt.air + 60 * longData$price.air/vot)
 longData$logsumRail = modeChoiceCoefs$`(Intercept):2rail` + modeChoiceCoefs$gTime * (longData$tt.rail + 60 * longData$price.rail/vot)
 longData$logsumBus = modeChoiceCoefs$`(Intercept):3bus` + modeChoiceCoefs$gTime * (longData$tt.bus + 60 * longData$price.rail/vot)
 
 #alt if using exponential gTime #selected so far for leisure !!!!!!!!!!!!!!
 longData$logsumAuto = 0 + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015* (longData$tt.auto + 60 * longData$price.auto/vot))  + modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$partySize
+longData$logsumAuto = 0 + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015* (longData$tt.auto + 60 * longData$price.auto/vot))  + modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$travelParty
 longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' + modeChoiceCoefs$`exp(-0.0015 * gTime)` *exp(-0.0015* (longData$tt.air + 60 * longData$price.air/vot))
 longData$logsumRail = modeChoiceCoefs$`(Intercept):2rail` + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015*(longData$tt.rail + 60 * longData$price.rail/vot))
 longData$logsumBus = modeChoiceCoefs$`(Intercept):3bus` + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015*(longData$tt.bus + 60 * longData$price.rail/vot))
@@ -205,6 +228,8 @@ longData$logsumBus = modeChoiceCoefs$`(Intercept):3bus` +
 
 #get 4mode logsum
 longData$logsum = log(exp(longData$logsumAuto) + exp(longData$logsumAir) + exp(longData$logsumRail) + exp(longData$logsumBus))
+#get the 3 mode logsum
+longData$logsum = log(exp(longData$logsumAuto) + exp(longData$logsumAir)  + exp(longData$logsumBus))
 
 #interaction logsum and overnight
 
@@ -216,7 +241,7 @@ longData$onLogsum = longData$overnight*longData$logsum
 
 fm <- formula(choice~ population + logsum |0|0)
 fm <- formula(choice~ population + dtLogsum + onLogsum|0|0) # selected !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+fm <- formula(choice~ civic + hotel + skiing + alt_is_metro + dtLogsum + onLogsum|0|0)
 
 model0 <- mnlogit(fm, longData, choiceVar = "alt", weights = weightListDest,  ncores=16, print.level = 2)
 

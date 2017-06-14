@@ -60,11 +60,15 @@ comparison$relError = comparison$absError/comparison$observedTrips
 
 #add the trip distance by car to improve plots
 source("C:/code/omx/api/r/omx.R")
+setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/canadian") #needed
+
 tdMatrix <-readMatrixOMX("input/combinedDistanceNAModelEst.omx", "auto_distance")
 comparison$td<-0
 for (i in 1:nrow(comparison)){
   comparison$td[i]<- tdMatrix[comparison[i,]$combinedZone,comparison[i,]$estimatedCombinedZone] 
 }
+
+setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/visitors") # if needed
 
 write.csv(comparison, "output/model0LeisureResultsByod.csv")
 write.csv(comparison, "output/model0LeisureResultsByodFromOntario.csv")
