@@ -151,6 +151,10 @@ modeChoiceCoefs = as.list(model2$coefficients)
 #clean non-selected destinations
 #longData <-read.csv("processed/longDataLeisure.csv")
 
+selectedAlts = unique(wideData$alt)
+longData <- subset(longData, alt %in% selectedAlts & modeChoice != "9")
+
+#**********************************************************************************************************************then this is not needed any more....
 longData <- subset(longData, alt!=125 & modeChoice != "9") #option for leisure
 longData <- subset(longData, alt!=125 & alt!=121 & alt!=129 & alt!=133& modeChoice != "9") #option for leisure from Ontario
 longData <- subset(longData, alt!=3 & alt!=34 & alt!=60 & alt<70 & modeChoice != "9") #option for leisure from US
@@ -162,6 +166,8 @@ longData <- subset(longData, alt!=121 & alt!=125 & alt!=143 & modeChoice != "9")
 wideData = subset (wideData, alt!=125) #option for leisure
 wideData = subset (wideData, alt!=121 & alt!=125 & alt!=143 & modeChoice != "9") #option for leisure from Ontario
 #do nothing for business from Ontario
+#***********************************************************************************************************************************until here 
+
 
 #add overnight
 longData$overnight = 1
@@ -206,6 +212,7 @@ longData$logsumBus = modeChoiceCoefs$`(Intercept):3bus` + modeChoiceCoefs$gTime 
 
 #alt if using exponential gTime #selected so far for leisure !!!!!!!!!!!!!!
 longData$logsumAuto = 0 + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015* (longData$tt.auto + 60 * longData$price.auto/vot))  + modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$partySize
+#but for visitors I need to use the alternative travel party variable name
 longData$logsumAuto = 0 + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015* (longData$tt.auto + 60 * longData$price.auto/vot))  + modeChoiceCoefs$onAuto*longData$overnight + modeChoiceCoefs$partySizeAuto*longData$travelParty
 longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' + modeChoiceCoefs$`exp(-0.0015 * gTime)` *exp(-0.0015* (longData$tt.air + 60 * longData$price.air/vot))
 longData$logsumRail = modeChoiceCoefs$`(Intercept):2rail` + modeChoiceCoefs$`exp(-0.0015 * gTime)` * exp(-0.0015*(longData$tt.rail + 60 * longData$price.rail/vot))
