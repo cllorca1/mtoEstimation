@@ -143,6 +143,7 @@ formula1 = mFormula(modeChoice ~  exp(-0.0008*onGTime) + exp(-0.01*dtGTime) + on
 model2 = mnlogit(formula1, dataModelMn, choiceVar = "modeChoiceString", print.level = 2, weights = weightsMnlogit, ncores=16)
 summary(model2)
 
+
 modeChoiceCoefs = as.list(model2$coefficients)
 
 
@@ -248,7 +249,10 @@ longData$onLogsum = longData$overnight*longData$logsum
 
 fm <- formula(choice~ population + logsum |0|0)
 fm <- formula(choice~ population + dtLogsum + onLogsum|0|0) # selected !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-fm <- formula(choice~ civic + hotel + skiing + alt_is_metro + dtLogsum + onLogsum|0|0)
+fm <- formula(choice~ hotel + alt_is_metro + dtLogsum + onLogsum|0|0) #for inbound leisure
+
+fm <- formula(choice~ civic + alt_is_metro + dtLogsum + onLogsum|0|0) #for inbound business
+fm <- formula(choice~ civic + hotel + skiing  + alt_is_metro + dtLogsum + onLogsum|0|0) #for inbound visit
 
 model0 <- mnlogit(fm, longData, choiceVar = "alt", weights = weightListDest,  ncores=16, print.level = 2)
 

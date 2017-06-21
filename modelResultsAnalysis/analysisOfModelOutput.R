@@ -103,4 +103,7 @@ ggplot(tripsByModeAndOD, aes(x=autoShare, y=airShare))+geom_point(size = n)
 
 #analyze modal shares
 
-tripData %>% filter(tripOriginType == "EXTUS") %>% group_by(tripPurpose, tripMode) %>% summarize(trips = n())
+analysis = tripData  %>% filter (tripOriginCombinedZone == tripDestCombinedZone) %>% group_by(tripOriginType, destZoneType, international, tripPurpose, tripMode) %>% summarize(trips = n())
+
+analysis = tripData  %>% filter (tripOriginType == "ONTARIO", destZoneType == "EXTUS") %>% group_by(tripState, tripPurpose, tripMode) %>% summarize(trips = n())
+analysis2 = tripData  %>% filter (tripOriginType == "EXTUS",  destZoneType == "ONTARIO") %>% group_by(tripState, tripPurpose, tripMode) %>% summarize(trips = n())
