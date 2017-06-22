@@ -249,10 +249,15 @@ longData$onLogsum = longData$overnight*longData$logsum
 
 fm <- formula(choice~ population + logsum |0|0)
 fm <- formula(choice~ population + dtLogsum + onLogsum|0|0) # selected !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+fm <- formula(choice~ hotel + alt_is_metro + dtLogsum + onLogsum|0|0) 
+
 fm <- formula(choice~ hotel + alt_is_metro + dtLogsum + onLogsum|0|0) #for inbound leisure
 
-fm <- formula(choice~ civic + alt_is_metro + dtLogsum + onLogsum|0|0) #for inbound business
-fm <- formula(choice~ civic + hotel + skiing  + alt_is_metro + dtLogsum + onLogsum|0|0) #for inbound visit
+fm <- formula(choice~ civic + alt_is_metro + dtLogsum + onLogsum|0|0) 
+
+fm <- formula(choice~ log(civic) + alt_is_metro + dtLogsum + onLogsum|0|0) #for inbound business
+
+fm <- formula(choice~ log(civic) + hotel+ dtLogsum + onLogsum|0|0) #for inbound visit
 
 model0 <- mnlogit(fm, longData, choiceVar = "alt", weights = weightListDest,  ncores=16, print.level = 2)
 

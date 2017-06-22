@@ -11,7 +11,7 @@ setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/z
 #read skim matrix
 source("C:/code/omx/api/r/omx.R")
 
-fileName = c("transitTT2.omx", "transitPrice2.omx", "transitFreq2.omx", "transitTrans2.omx")
+fileName = c("transitTT.omx", "transitPrice.omx", "transitFreq.omx", "transitTrans.omx")
 matrixName =  c("air", "auto", "bus", "rail")
 newFileName = c("transitTTModelEstV2.omx", "transitPriceModelEstV2.omx", "transitFreqModelEstV2.omx", "transitTransModelEstV2.omx")
 #newFileName = c("transitTTModelEst.omx", "transitPriceModelEst.omx", "transitFreqModelEst.omx", "transitTransModelEst.omx")
@@ -23,6 +23,7 @@ equivalence <- read.csv("conversionExtToStates.csv")
 n = max(equivalence$final)
 
 #Start loop to aggregate data
+
 
 
 alphaPopulation = 0.6
@@ -111,9 +112,24 @@ listOMX(newFileName[2])
 listOMX(newFileName[3])
 listOMX(newFileName[4])
 
+writeOMXVersion(newFileName[1])
+writeOMXVersion(newFileName[2])
+writeOMXVersion(newFileName[3])
+writeOMXVersion(newFileName[4])
+
 #NEED TO EDIT MANNUALLY THE PROPERTY VERSION TO CONVERT IT TO A STRING (FOR JAVA)
 
+writeOMXVersion <- function(OMXFileName){
+  H5File <- H5Fopen( OMXFileName )
+  H5Attr <- H5Aopen( H5File, "OMX_VERSION" )
+  h5writeAttribute( "0.2", H5File, "OMX_VERSION" )
 
+  #Close everything up before exiting
+  
+  H5Fclose( H5File )
+  RootAttr
+  
+}
 
 
 
