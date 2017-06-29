@@ -11,15 +11,21 @@ library(rhdf5)
 library(h5)
 source("C:/code/omx/api/r/omx.R")
 library(data.table)
+library(ggplot2)
 
 
 
 data = read.csv("data/tsrc_filtered_input_trips.csv")
+data_mc = read.csv("data/data_for_modechoice.csv")
+
+
+
+
+
 
 alternatives = read.csv("data/destination_choice_alternatives.csv")
 
 #load skims
-
 
 #load skim auto distance
 fileName = "C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/canadian/input/combinedDistanceNAModelEstV2.omx"
@@ -67,20 +73,38 @@ matrixBusTrans<-tt[]
 tt = transfers["data/rail"]
 matrixRailTrans<-tt[]
 
-
-write.table(t(c(names(data), "alt", "choice" ,"td","tt.auto", "tt.air", "tt.bus", "tt.rail", 
-                "price.auto", "price.air", "price.bus", "price.rail", 
-                "freq.auto", "freq.air", "freq.bus", "freq.rail", 
-                "trans.auto", "trans.air", "trans.bus", "trans.rail", 
-                names(alternatives))), "processed/longData.csv", col.names = TRUE , sep = ",", row.names = FALSE)
+# write.table(t(c(names(data), "alt", "choice" ,"td","tt.auto", "tt.air", "tt.bus", "tt.rail", 
+#                 "price.auto", "price.air", "price.bus", "price.rail", 
+#                 "freq.auto", "freq.air", "freq.bus", "freq.rail", 
+#                 "trans.auto", "trans.air", "trans.bus", "trans.rail", 
+#                 names(alternatives))), "processed/longData.csv", col.names = TRUE , sep = ",", row.names = FALSE)
 longData = data.frame()
 list1 = list()
 length(list1)=nrow(data)
+
 for (i in 1:nrow(data)){
   trip <-data[i,]
   destinations <-data.frame()
   l = list()
   length(l)=nrow(alternatives)
+  
+  #get variables from mode choice data set
+  v.checktt.auto = data_mc$tot_time.1[which(data_mc$id == trip$id)]
+  v.checktt.air = data_mc$tot_time.2[which(data_mc$id == trip$id)]
+  v.checktt.bus = data_mc$tot_time.4[which(data_mc$id == trip$id)]
+  v.checktt.rail = data_mc$tot_time.5[which(data_mc$id == trip$id)]
+  v.sex = data_mc$sex[which(data_mc$id == trip$id)]
+  v.age = data_mc$age_gr2[which(data_mc$id == trip$id)]
+  v.party = data_mc$tp_d01[which(data_mc$id == trip$id)]
+  v.hhparty = data_mc$t_g0802[which(data_mc$id == trip$id)]
+  v.income = data_mc$incomgr2[which(data_mc$id == trip$id)]
+  v.labor = data_mc$lfsstatg[which(data_mc$id == trip$id)]
+  v.edu = data_mc$edlevgr[which(data_mc$id == trip$id)]
+  v.modeChoice = data_mc$tmdtype2[which(data_mc$id == trip$id)]
+  v.weightH = data_mc$wtep[which(data_mc$id == trip$id)]
+  v.weightT = data_mc$wttp[which(data_mc$id == trip$id)]
+  v.nights = data_mc$cannite[which(data_mc$id == trip$id)]
+  
   #loop through all the destinations
   for (j in 1:nrow(alternatives)){
     zone <-alternatives[j,]
@@ -110,6 +134,7 @@ for (i in 1:nrow(data)){
     transBus= matrixBusTrans[origCZId, destCZId]
     transRail = matrixRailTrans[origCZId, destCZId]
     
+    
     if (alt==dest){
       choice = TRUE
     }
@@ -118,8 +143,10 @@ for (i in 1:nrow(data)){
     row<-c(trip, alt = zone$combinedZone, choice = choice, td = dist, tt.auto = ttAuto, tt.air = ttAir,
            tt.bus = ttBus, tt.rail= ttRail, price.auto = dist*0.072, price.air = priceAir, 
            price.bus = priceBus, price.rail = priceRail, 
-           freq.auto = freqAuto, freq.Air = freqAir, freq.bus = freqBus, freq.rail = freqRail, 
-           trans.Auto = transAuto, trans.Air = transAir, trans.bus = transBus, trans.rail = transRail,
+           freq.auto = freqAuto, freq.air = freqAir, freq.bus = freqBus, freq.rail = freqRail, 
+           trans.auto = transAuto, trans.air = transAir, trans.bus = transBus, trans.rail = transRail,
+           sex=v.sex, age_gr = v.age, party = v.party, hhparty = v.hhparty, income = v.income, labor = v.labor, edu = v.edu, mode = v.modeChoice, nights = v.nights,  
+           checktt.auto = v.checktt.auto, checktt.air = v.checktt.air, checktt.rail = v.checktt.rail, checktt.bus = v.checktt.bus,
            zone)
     #write.table(row, file="longData.csv", append = TRUE, col.names = FALSE, sep="," )
     #alternatives<-rbind(alternatives, row)
@@ -135,43 +162,35 @@ for (i in 1:nrow(data)){
   #longData<-rbind(longData, alternatives)
 }
 longData = rbindlist(list1)
-fwrite(x=longData, file="processed/longData.csv", append = FALSE, col.names = TRUE, sep="," , row.names = FALSE)
+fwrite(x=longData, file="processed/longData2.csv", append = FALSE, col.names = TRUE, sep="," , row.names = FALSE)
 
 
-#read already generated data
+#read already generated data ###############################################################################################################################################
 
-longData = fread(file="processed/longData.csv", header = T, sep = ',')
-wideData = subset(longData, choice == TRUE)
+longData = fread(file="processed/longData2.csv", header = T, sep = ',')
+
 
 #filter by purpose---
 
 ##Leisure
 longData = subset(longData, purpose =="Leisure")
-wideData = subset(wideData, purpose =="Leisure")
+#wideData = subset(wideData, purpose =="Leisure")
 
 ##Business
 longData = subset(longData, purpose =="Business")
-wideData = subset(wideData, purpose =="Business")
+#wideData = subset(wideData, purpose =="Business")
 
 ##Visit
 longData = subset(longData, purpose =="Visit")
-wideData = subset(wideData, purpose =="Visit")
+#wideData = subset(wideData, purpose =="Visit")
 
 
-#estimate DC
 
-library(mlogit)
-library(mnlogit)
 
-selectedAlts = unique(wideData$alt)
-longData <- subset(longData, alt %in% selectedAlts)
 
-longData$civic = longData$population + longData$employment
 
-weights = wideData$wtep
-f = formula(choice~ log(civic) + (hotel) + (sightseeing) + (outdoors) + (skiing) + exp(-0.003*td) | 0 |0)
 
-dcModel = mnlogit(data = longData, formula = f , choiceVar = "alt", weights = weights,  ncores=16, print.level = 2)
-summary(dcModel)
+
+
 
 
