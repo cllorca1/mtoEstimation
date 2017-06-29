@@ -7,14 +7,34 @@
 
 library(mlogit)
 library(mnlogit)
+library(ggplot2)
+
+purp = "Leisure"
+purp = "Business"
+purp = "Visit"
+
+#read already generated data ###############################################################################################################################################
+
+longData0 = fread(file="processed/longData2.csv", header = T, sep = ',')
+
+#filter by purpose---
+longData = subset(longData0, purpose == purp)
+         
+##Leisure
+# longData = subset(longData, purpose =="Leisure")
+# ##Business
+# longData = subset(longData, purpose =="Business")
+# ##Visit
+# longData = subset(longData, purpose =="Visit")
+
 
 #initial transformations on longData #################################################################################################################
 #remove non-selected alternatives
-selectedAlts = unique(wideData$alt)
-longData <- subset(longData, alt %in% selectedAlts)
+
 
 #add additional demography or foursquare variables
 longData$civic = longData$population + longData$employment
+longData$log_civic = log(longData$civic)
 
 longData$intrazonal = 0
 longData$intrazonal[longData$lvl2_orig==longData$zone_lvl2] = 1
@@ -48,11 +68,15 @@ longData$log_skiing [is.infinite(longData$log_skiing)] = 0
 longData$tt.air[is.na(longData$tt.air)] <- max(longData$tt.air, na.rm = TRUE)
 longData$tt.auto[is.na(longData$tt.auto)] <- max(longData$tt.auto, na.rm = TRUE)
 longData$tt.bus[is.na(longData$tt.bus)] <- max(longData$tt.bus, na.rm = TRUE)
-longData$tt.rail[is.na(longData$tt.rail)] <- max(wideData$tt.rail, na.rm = TRUE)
+longData$tt.rail[is.na(longData$tt.rail)] <- max(longData$tt.rail, na.rm = TRUE)
 
 longData$price.air[is.na(longData$price.air)] <- max(longData$price.air, na.rm = TRUE)
 longData$price.bus[is.na(longData$price.bus)] <- max(longData$price.bus, na.rm = TRUE)
 longData$price.rail[is.na(longData$price.rail)] <- max(longData$price.rail, na.rm = TRUE)
+
+longData$freq.air[longData$freq.air ==-1] <- 0
+longData$freq.bus[longData$freq.bus ==-1] <- 0
+longData$freq.rail[longData$freq.rail==-1] <- 0
 
 #auto prices
 #do not need because it was done in a previous step
@@ -60,7 +84,7 @@ longData$price.auto = longData$td*0.072
 
 #discard modes higher than 5
 
-longData$mode[wideData$mode==3]=1
+longData$mode[longData$mode==3]=1
 
 longData = subset(longData, mode<6)
 
@@ -77,16 +101,17 @@ longData$income4[longData$income==4]=1
 longData$income1 = 0
 longData$income1[longData$income==1]=1
 
-
 longData$female = 0
-longData$sex[longData$income==2]=1
+longData$female[longData$sex==2]=1
 
 #create overnight-variable
 longData$overnight = 1
 longData$overnight[longData$nights==0] = 0
 
-#filter longData to get wide Data
+#filter longData to get wide Data na dremove non selected alternatives
 wideData = subset(longData, choice == TRUE)
+selectedAlts = unique(longData$alt)
+longData <- subset(longData, alt %in% selectedAlts)
 
 #test the merged data regarding tts ###################################################################################################################
 # ggplot(wideData, aes(x=tt.auto, y=checktt.auto)) + geom_point() + xlim(0,2000) + ylim(0,2000)
@@ -105,11 +130,11 @@ weights = wideData$wtep
 #weights = wideData$wttp
 #?
 
-f = formula(choice ~ log(civic) + intrametro + intrarural + intermetro + exp(-0.0035*td) + 
+f = formula(choice ~ log_civic + intrametro + intrarural + intermetro + exp(-0.0035*td) + 
               log_hotel + log_sightseeing + log_outdoors + log_skiing + niagara | 0 |0)
 
 
-f = formula(choice ~ log(civic) + intrametro + intrarural + intermetro + exp(-0.0035*td) | 0 |0)
+f = formula(choice ~ log_civic + intrametro + intrarural + intermetro + exp(-0.0035*td) | 0 |0)
 
 dcModel = mnlogit(data = longData, formula = f , choiceVar = "alt", weights = weights,  ncores=16, print.level = 2)
 summary(dcModel)
@@ -129,10 +154,6 @@ wideData$modeChoice = as.factor(as.character(wideData$modeChoice))
 #weight vector for mnlogit
 weightsMnlogit = wideData$wtep
 
-names(wideData)[25] = "freq.air"
-names(wideData)[28] = "trans.auto"
-names(wideData)[29] = "trans.air"
-names(wideData)
 
 dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = 16:31) #check column numbers
 
@@ -146,8 +167,8 @@ dataModelMn$modeChoiceString[dataModelMn$alt=="rail"] = "3rail"
 dataModelMn$modeChoiceString = as.factor(dataModelMn$modeChoiceString)
 
 #vot
-vot = 32 #for visit and leisure
-vot = 65 #for business
+if (purp =="Business"){vot = 65} else {vot=32}
+
 
 dataModelMn$gTime = dataModelMn$tt + 60 * dataModelMn$price/ vot 
 
@@ -165,12 +186,19 @@ dataModelMn$isRail[dataModelMn$modeChoiceString=="3rail"] = 1
 #frequency for transit
 dataModelMn$transitFreq = dataModelMn$freq*(1-dataModelMn$isAuto)
 
+dataModelMn$femaleInAir = dataModelMn$female*dataModelMn$isAir
+dataModelMn$femaleInAuto = dataModelMn$female*dataModelMn$isAuto
+dataModelMn$femaleInBus = dataModelMn$female*dataModelMn$isBus
+dataModelMn$femaleInRail = dataModelMn$female*dataModelMn$isRail
+
+
+
 #model estimation
 
-fl_mc = modeChoice ~  exp(-0.0015*gTime)  + transitFreq | intermetro + party + income4 + young | 1  
-fl_mc = modeChoice ~  exp(-0.0015*gTime)  + transitFreq + intermetro +  party + overnight  | 1 | 1  
+fmc = modeChoice ~  femaleInAir + femaleInBus + exp(-0.0004*gTime)  + transitFreq | intermetro + overnight + party + income4 + young | 1  #ja. for leisure
+fmc = modeChoice ~  exp(-0.0007*gTime)  + transitFreq | intermetro +  party + overnight | 1  #ja. for leisure of non-residents
 
-mcModel = mnlogit(data = dataModelMn, formula = fl_mc , choiceVar = "modeChoiceString", weights = weightsMnlogit,  ncores=16, print.level = 2)
+mcModel = mnlogit(data = dataModelMn, formula = fmc , choiceVar = "modeChoiceString", weights = weightsMnlogit,  ncores=16, print.level = 2)
 summary(mcModel)
 
 modeChoiceCoefs = as.list(model2$coefficients)

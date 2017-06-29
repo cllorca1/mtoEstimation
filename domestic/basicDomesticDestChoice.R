@@ -145,7 +145,8 @@ for (i in 1:nrow(data)){
            price.bus = priceBus, price.rail = priceRail, 
            freq.auto = freqAuto, freq.air = freqAir, freq.bus = freqBus, freq.rail = freqRail, 
            trans.auto = transAuto, trans.air = transAir, trans.bus = transBus, trans.rail = transRail,
-           sex=v.sex, age_gr = v.age, party = v.party, hhparty = v.hhparty, income = v.income, labor = v.labor, edu = v.edu, mode = v.modeChoice, nights = v.nights,  
+           sex=v.sex, age_gr = v.age, party = v.party, hhparty = v.hhparty, income = v.income, labor = v.labor, edu = v.edu, mode = v.modeChoice, nights = v.nights, 
+           weightH = v.weightH, weightT = v.weightT, 
            checktt.auto = v.checktt.auto, checktt.air = v.checktt.air, checktt.rail = v.checktt.rail, checktt.bus = v.checktt.bus,
            zone)
     #write.table(row, file="longData.csv", append = TRUE, col.names = FALSE, sep="," )
@@ -165,24 +166,7 @@ longData = rbindlist(list1)
 fwrite(x=longData, file="processed/longData2.csv", append = FALSE, col.names = TRUE, sep="," , row.names = FALSE)
 
 
-#read already generated data ###############################################################################################################################################
 
-longData = fread(file="processed/longData2.csv", header = T, sep = ',')
-
-
-#filter by purpose---
-
-##Leisure
-longData = subset(longData, purpose =="Leisure")
-#wideData = subset(wideData, purpose =="Leisure")
-
-##Business
-longData = subset(longData, purpose =="Business")
-#wideData = subset(wideData, purpose =="Business")
-
-##Visit
-longData = subset(longData, purpose =="Visit")
-#wideData = subset(wideData, purpose =="Visit")
 
 
 
