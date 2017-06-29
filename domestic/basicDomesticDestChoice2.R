@@ -13,6 +13,10 @@ purp = "Leisure"
 purp = "Business"
 purp = "Visit"
 
+alpha = -0.0004
+
+alpha = -0.00015
+
 #read already generated data ###############################################################################################################################################
 
 longData0 = fread(file="processed/longData2.csv", header = T, sep = ',')
@@ -130,6 +134,8 @@ weights = wideData$wtep
 #weights = wideData$wttp
 #?
 
+
+
 f = formula(choice ~ log_civic + intrametro + intrarural + intermetro + exp(-0.0035*td) + 
               log_hotel + log_sightseeing + log_outdoors + log_skiing + niagara | 0 |0)
 
@@ -161,8 +167,8 @@ dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep =
 dataModelMn$modeChoiceString= "0"
 dataModelMn$modeChoiceString[dataModelMn$alt=="auto"] = "0auto"
 dataModelMn$modeChoiceString[dataModelMn$alt=="air"] = "1air"
-dataModelMn$modeChoiceString[dataModelMn$alt=="bus"] = "2bus"
-dataModelMn$modeChoiceString[dataModelMn$alt=="rail"] = "3rail"
+dataModelMn$modeChoiceString[dataModelMn$alt=="bus"] = "3bus"
+dataModelMn$modeChoiceString[dataModelMn$alt=="rail"] = "2rail"
 
 dataModelMn$modeChoiceString = as.factor(dataModelMn$modeChoiceString)
 
@@ -178,9 +184,9 @@ dataModelMn$isAuto[dataModelMn$modeChoiceString=="0auto"] = 1
 dataModelMn$isAir = 0
 dataModelMn$isAir[dataModelMn$modeChoiceString=="1air"] = 1
 dataModelMn$isBus = 0
-dataModelMn$isBus[dataModelMn$modeChoiceString=="2bus"] = 1
+dataModelMn$isBus[dataModelMn$modeChoiceString=="3bus"] = 1
 dataModelMn$isRail = 0
-dataModelMn$isRail[dataModelMn$modeChoiceString=="3rail"] = 1
+dataModelMn$isRail[dataModelMn$modeChoiceString=="2rail"] = 1
 
 #specific variables per mode
 #frequency for transit
@@ -195,18 +201,56 @@ dataModelMn$femaleInRail = dataModelMn$female*dataModelMn$isRail
 
 #model estimation
 
-fmc = modeChoice ~  femaleInAir + femaleInBus + exp(-0.0004*gTime)  + transitFreq | intermetro + overnight + party + income4 + young | 1  #ja. for leisure
-fmc = modeChoice ~  exp(-0.0007*gTime)  + transitFreq | intermetro +  party + overnight | 1  #ja. for leisure of non-residents
+dataModelMn$adjGTime = dataModelMn$gTtime*alpha
+
+fmc = modeChoice ~  femaleInAir + femaleInBus + exp(adjGTime)  + transitFreq | intermetro + overnight + party + income4 + young | 1  #ja. for leisure
+fmc = modeChoice ~  exp(adjGTime)  + transitFreq | intermetro +  party + overnight | 1  #ja. for leisure of non-residents
 
 mcModel = mnlogit(data = dataModelMn, formula = fmc , choiceVar = "modeChoiceString", weights = weightsMnlogit,  ncores=16, print.level = 2)
 summary(mcModel)
 
-modeChoiceCoefs = as.list(model2$coefficients)
+modeChoiceCoefs = as.list(mcModel$coefficients)
 
 
 #dc models with logsums from mode choice ####################################################################################################################
+##now this is manual depending on the model coefficients
 
+#1 using the visitor mode choice model
 
+longData$logsumAuto = 0 + #intercept
+  modeChoiceCoefs$exp(adjGTime) * exp(alpha* (longData$tt.auto + 60 * longData$price.auto/vot))   #impedance
+  
+longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' +
+  modeChoiceCoefs$exp(adjGTime) * exp(alpha*  (longData$tt.air + 60 * longData$price.air/vot)) +
+  modeChoiceCoefs$transitFreq * longData$freq.air + 
+  modeChoiceCoefs$'intermetro:1air'*longData$intermetro + 
+  modeChoiceCoefs$'party:1air' * longData$party + 
+  modeChoiceCoefs$'overnight:1air' * longData$overnight
+
+longData$logsumRail = modeChoiceCoefs$'(Intercept):2rail' +
+  modeChoiceCoefs$exp(adjGTime) * exp(alpha* (longData$tt.rail + 60 * longData$price.rail/vot)) + 
+  modeChoiceCoefs$transitFreq * longData$freq.rail + 
+  modeChoiceCoefs$'intermetro:2rail'*longData$intermetro + 
+  modeChoiceCoefs$'party:2rail' * longData$party + 
+  modeChoiceCoefs$'overnight:2rail' * longData$overnight
+
+longData$logsumBus = modeChoiceCoefs$'(Intercept):3bus' +
+  modeChoiceCoefs$exp(adjGTime) * exp(alpha * (longData$tt.bus + 60 * longData$price.rail/vot)) + 
+  modeChoiceCoefs$transitFreq * longData$freq.bus + 
+  modeChoiceCoefs$'intermetro:3bus'*longData$intermetro + 
+  modeChoiceCoefs$'party:3bus' * longData$party + 
+  modeChoiceCoefs$'overnight:3bus' * longData$overnight
+
+longData$logsum = log(exp(longData$logsumAuto) + exp(longData$logsumAir) + exp(longData$logsumRail) + exp(longData$logsumBus))
+
+longData$dtLogsum = (1-longData$overnight)*longData$logsum
+longData$onLogsum = longData$overnight*longData$logsum
+
+f = formula(choice ~ log_civic + intrametro + intrarural + intermetro + logsum + 
+              log_hotel + log_sightseeing + log_outdoors + log_skiing + niagara | 0 |0)
+
+dcModel2 = mnlogit(data = longData, formula = f , choiceVar = "alt", weights = weights,  ncores=16, print.level = 2)
+summary(dcModel2)
 
 
 
