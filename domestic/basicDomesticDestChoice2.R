@@ -52,6 +52,7 @@ longData$intrametro = longData$orig_is_metro*longData$intrazonal
 longData$niagara = 0
 longData$niagara[longData$zone_lvl2==30] = 1
 
+
 longData$log_airport = log(longData$airport)
 longData$log_hotel = log(longData$hotel)
 longData$log_medical = log(longData$medical)
@@ -59,6 +60,9 @@ longData$log_nightlife = log(longData$nightlife)
 longData$log_outdoors = log(longData$outdoors)
 longData$log_sightseeing = log(longData$sightseeing)
 longData$log_skiing = log(longData$skiing)
+
+longData$log_td = log(longData$td)
+
 
 longData$log_airport[is.infinite(longData$log_airport)] = 0
 
@@ -68,6 +72,8 @@ longData$log_nightlife[is.infinite(longData$log_nightlife)] = 0
 longData$log_outdoors[is.infinite(longData$log_outdoors)] = 0
 longData$log_sightseeing[is.infinite(longData$log_sightseeing)] = 0
 longData$log_skiing [is.infinite(longData$log_skiing)] = 0
+
+longData$log_td[is.infinite(longData$log_td)] = 0
 
 longData$tt.air[is.na(longData$tt.air)] <- max(longData$tt.air, na.rm = TRUE)
 longData$tt.auto[is.na(longData$tt.auto)] <- max(longData$tt.auto, na.rm = TRUE)
@@ -138,7 +144,7 @@ weights = wideData$weightT
 
 
 f = formula(choice ~ log_civic + intrametro + intrarural + intermetro + exp(-0.0035*td) + 
-              log_hotel + log_sightseeing + log_outdoors + log_skiing + niagara | 0 |0)
+              log_hotel + log_sightseeing + log_outdoors + log_skiing + niagara + log_td| 0 |0)
 
 
 f = formula(choice ~ log_civic + intrametro + intrarural + intermetro + exp(-0.0035*td) | 0 |0)
@@ -244,11 +250,12 @@ longData$logsumBus = modeChoiceCoefs$'(Intercept):3bus' +
 
 longData$logsum = log(exp(longData$logsumAuto) + exp(longData$logsumAir) + exp(longData$logsumRail) + exp(longData$logsumBus))
 
+
 longData$dtLogsum = (1-longData$overnight)*longData$logsum
 longData$onLogsum = longData$overnight*longData$logsum
 
 f2 = formula(choice ~ log_civic + intrametro + intrarural + intermetro + dtLogsum + onLogsum +
-              log_hotel + log_sightseeing + log_outdoors + log_skiing + niagara | 0 |0)
+              log_hotel + log_sightseeing + log_outdoors + log_skiing + niagara + exp(-0.0035*td) | 0 |0)
 
 dcModel2 = mnlogit(data = longData, formula = f2 , choiceVar = "alt", weights = weights,  ncores=16, print.level = 2)
 summary(dcModel2)
