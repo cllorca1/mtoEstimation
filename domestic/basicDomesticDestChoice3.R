@@ -60,7 +60,7 @@ comparison$observedTrips = comparison$observedTrips/365/4
 comparisonByDest$estimatedTrips = comparisonByDest$estimatedTrips/365/4
 comparisonByDest$observedTrips = comparisonByDest$observedTrips/365/4
 
-ggplot(comparison, aes(x=observedTrips, y= estimatedTrips)) + geom_point() + xlim(0,2000) + ylim(0,2000)
+ggplot(comparison, aes(x=observedTrips, y= estimatedTrips)) + geom_point()  
 ggplot(comparisonByDest, aes(x=observedTrips, y= estimatedTrips)) + geom_point() + xlim(0,10000) + ylim(0,10000)
 
 #calculate errors
@@ -82,7 +82,9 @@ ggplot(subset(comparison, lvl2_orig < 70), aes(x=td, y= error)) + geom_point()
 ggplot(subset(comparison, lvl2_orig < 70), aes(x=observedTrips, y= error)) + geom_point() + xlim(0,2000) + ylim(-2000,2000)
 ggplot(subset(comparison, lvl2_orig < 70), aes(x=absError, y= relError)) + geom_point() 
 
-sum(comparison$error^2)/nrow(comparison)
+sqrt(sum(comparison$error^2)/nrow(comparison))
+
+setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/domestic")
 
 write.csv(comparison, "output/model0LeisureResultsByod.csv")
 write.csv(comparison, "output/model0LeisureResultsByodFromOntario.csv")
