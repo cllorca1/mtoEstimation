@@ -18,9 +18,9 @@ purpList = c("Leisure", "Business", "Visit")
 
 
 #select purpose
-purp = "Leisure"
-purp = "Business"
-purp = "Visit"
+# purp = "Leisure"
+# purp = "Business"
+# purp = "Visit"
 
 for (purp in purpList){
 
@@ -168,8 +168,8 @@ summary(dcModel)
 
 fileName = paste("output/dcModelTd",purp,".csv",sep="")
 write.csv(x=summary(dcModel)$CoefTable, file = fileName)
-write.csv(x="", file = fileName, append = TRUE)
-write.csv(x=dcModel$logLik, file = fileName, append = TRUE)
+write.table(x="", file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
+write.table(x=dcModel$logLik[1], file = fileName, append = TRUE,  col.names = FALSE, row.names = FALSE)
 
 #estimate MC#############################################################################################################################################
 
@@ -247,8 +247,8 @@ mcModel0 = mnlogit(data = dataModelMn, formula = fmc0 , choiceVar = "modeChoiceS
 summary(mcModel0)
 fileName = paste("output/mcModelConstants",purp,".csv",sep="")
 write.csv(x=summary(mcModel0)$CoefTable, file = fileName)
-write.csv(x="", file = fileName, append = TRUE)
-write.csv(x=mcModel0$logLik, file = fileName, append = TRUE)
+write.table(x="", file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
+write.table(x=mcModel0$logLik[1], file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
 
 if (purp=="Leisure") fmc = modeChoice ~  femaleInAuto + exp(adjGTime)  + transitFreq + youngBusRail + income4BusRail + partyAir + partyBusRail + overnightAir + overnightBusRail| intermetro | 1  #ja. for leisure
 if (purp=="Business") fmc = modeChoice ~  exp(adjGTime)  + transitFreq  + income1Air + femaleInAuto + intermetroAir + intermetroBusRail|young  + overnight  +edu4 | 1   
@@ -257,8 +257,8 @@ mcModel = mnlogit(data = dataModelMn, formula = fmc , choiceVar = "modeChoiceStr
 summary(mcModel)
 fileName = paste("output/mcModelResidents",purp,".csv",sep="")
 write.csv(x=summary(mcModel)$CoefTable, file = fileName)
-write.csv(x="", file = fileName, append = TRUE)
-write.csv(x=mcModel$logLik, file = fileName, append = TRUE)
+write.table(x="", file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
+write.table(x=mcModel$logLik[1], file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
 
 #visitors
 if (purp=="Leisure") fmc2 = modeChoice ~  exp(adjGTime)  + transitFreq + partyAir + partyBusRail + overnightAir + overnightBusRail| intermetro | 1  #ja. for leisure of non-residents
@@ -269,8 +269,8 @@ mcModel2 = mnlogit(data = dataModelMn, formula = fmc2 , choiceVar = "modeChoiceS
 summary(mcModel2)
 fileName = paste("output/mcModelVisitors",purp,".csv",sep="")
 write.csv(x=summary(mcModel2)$CoefTable, file = fileName)
-write.csv(x="", file = fileName, append = TRUE)
-write.csv(x=mcModel2$logLik, file = fileName, append = TRUE)
+write.table(x="", file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
+write.table(x=mcModel2$logLik[1], file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
 
 modeChoiceCoefs = as.list(mcModel2$coefficients)
 
@@ -376,8 +376,8 @@ summary(dcModel)
 
 fileName = paste("output/dcModelLogsum",purp,".csv",sep="")
 write.csv(x=summary(dcModel2)$CoefTable, file = fileName)
-write.csv(x="", file = fileName, append = TRUE)
-write.csv(x=dcModel2$logLik, file = fileName, append = TRUE)
+write.table(x="", file = fileName, append = TRUE)
+write.table(x=dcModel2$logLik[1], file = fileName, append = TRUE)
 
 }
 
