@@ -4,20 +4,25 @@
 #
 #part 2: model estimation
 #
-
+library(data.table)
 library(mlogit)
 library(mnlogit)
 library(ggplot2)
 
 #read already generated data ###############################################################################################################################################
 
+setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/domestic")
 longData0 = fread(file="processed/longData2.csv", header = T, sep = ',')
+
+purpList = c("Leisure", "Business", "Visit")
 
 
 #select purpose
 purp = "Leisure"
 purp = "Business"
 purp = "Visit"
+
+for (purp in purpList){
 
 if (purp=="Leisure" | purp =="Visit") alpha = -0.0004 #used for leisure mc
 if (purp=="Business") alpha = -0.0015 #
@@ -163,6 +168,8 @@ summary(dcModel)
 
 fileName = paste("output/dcModelTd",purp,".csv",sep="")
 write.csv(x=summary(dcModel)$CoefTable, file = fileName)
+write.csv(x="", file = fileName, append = TRUE)
+write.csv(x=dcModel$logLik, file = fileName, append = TRUE)
 
 #estimate MC#############################################################################################################################################
 
@@ -228,6 +235,9 @@ dataModelMn$income4Auto = dataModelMn$income4*dataModelMn$isAuto
 dataModelMn$overnightAir = dataModelMn$overnight*dataModelMn$isAir
 dataModelMn$overnightBusRail = dataModelMn$overnight*(dataModelMn$isBus + dataModelMn$isRail)
 
+dataModelMn$intermetroAir = dataModelMn$intermetro*dataModelMn$isAir
+dataModelMn$intermetroBusRail = dataModelMn$intermetro*(dataModelMn$isBus + dataModelMn$isRail)
+
 #model estimation
 
 dataModelMn$adjGTime = dataModelMn$gTime*alpha
@@ -237,24 +247,30 @@ mcModel0 = mnlogit(data = dataModelMn, formula = fmc0 , choiceVar = "modeChoiceS
 summary(mcModel0)
 fileName = paste("output/mcModelConstants",purp,".csv",sep="")
 write.csv(x=summary(mcModel0)$CoefTable, file = fileName)
+write.csv(x="", file = fileName, append = TRUE)
+write.csv(x=mcModel0$logLik, file = fileName, append = TRUE)
 
 if (purp=="Leisure") fmc = modeChoice ~  femaleInAuto + exp(adjGTime)  + transitFreq + youngBusRail + income4BusRail + partyAir + partyBusRail + overnightAir + overnightBusRail| intermetro | 1  #ja. for leisure
-if (purp=="Business") fmc = modeChoice ~  exp(adjGTime)  + transitFreq  + income1Air + femaleInAuto|young  + overnight  +edu4 + intermetro | 1   
+if (purp=="Business") fmc = modeChoice ~  exp(adjGTime)  + transitFreq  + income1Air + femaleInAuto + intermetroAir + intermetroBusRail|young  + overnight  +edu4 | 1   
 if (purp=="Visit") fmc = modeChoice ~  exp(adjGTime)  + transitFreq  |  young + party + overnight  +income4 + intermetro | 1  
 mcModel = mnlogit(data = dataModelMn, formula = fmc , choiceVar = "modeChoiceString", weights = weightsMnlogit,  ncores=16, print.level = 2)
 summary(mcModel)
-fileName = paste("output/dcModelResidents",purp,".csv",sep="")
+fileName = paste("output/mcModelResidents",purp,".csv",sep="")
 write.csv(x=summary(mcModel)$CoefTable, file = fileName)
+write.csv(x="", file = fileName, append = TRUE)
+write.csv(x=mcModel$logLik, file = fileName, append = TRUE)
 
 #visitors
 if (purp=="Leisure") fmc2 = modeChoice ~  exp(adjGTime)  + transitFreq + partyAir + partyBusRail + overnightAir + overnightBusRail| intermetro | 1  #ja. for leisure of non-residents
-if (purp=="Business") fmc2 = modeChoice ~  exp(adjGTime)  + transitFreq   |  overnight  + intermetro | 1  
+if (purp=="Business") fmc2 = modeChoice ~  exp(adjGTime)  + transitFreq  + intermetroAir + intermetroBusRail |  overnight | 1  
 if (purp=="Visit") fmc2 = modeChoice ~  exp(adjGTime)  + transitFreq  + partyBusRail|   overnight  + intermetro | 1  
 mcModel2 = mnlogit(data = dataModelMn, formula = fmc2 , choiceVar = "modeChoiceString", weights = weightsMnlogit,  ncores=16, print.level = 2)
 
 summary(mcModel2)
 fileName = paste("output/mcModelVisitors",purp,".csv",sep="")
 write.csv(x=summary(mcModel2)$CoefTable, file = fileName)
+write.csv(x="", file = fileName, append = TRUE)
+write.csv(x=mcModel2$logLik, file = fileName, append = TRUE)
 
 modeChoiceCoefs = as.list(mcModel2$coefficients)
 
@@ -295,21 +311,21 @@ if (purp == "Leisure"){
   longData$logsumAir = modeChoiceCoefs$'(Intercept):1air' +
     modeChoiceCoefs$'exp(adjGTime)' * exp(alpha*  (longData$tt.air + 60 * longData$price.air/vot)) +
     modeChoiceCoefs$transitFreq * longData$freq.air + 
-    modeChoiceCoefs$'intermetro:1air'*longData$intermetro + 
+    modeChoiceCoefs$'intermetroAir'*longData$intermetro + 
    # modeChoiceCoefs$'partyAir' * longData$party + 
     modeChoiceCoefs$'overnight:1air' * longData$overnight
   
   longData$logsumRail = modeChoiceCoefs$'(Intercept):2rail' +
     modeChoiceCoefs$'exp(adjGTime)' * exp(alpha* (longData$tt.rail + 60 * longData$price.rail/vot)) + 
     modeChoiceCoefs$transitFreq * longData$freq.rail + 
-    modeChoiceCoefs$'intermetro:2rail'*longData$intermetro + 
+    modeChoiceCoefs$'intermetroBusRail'*longData$intermetro + 
     #modeChoiceCoefs$'partyBusRail' * longData$party + 
     modeChoiceCoefs$'overnight:2rail' * longData$overnight
   
   longData$logsumBus = modeChoiceCoefs$'(Intercept):3bus' +
     modeChoiceCoefs$'exp(adjGTime)' * exp(alpha * (longData$tt.bus + 60 * longData$price.rail/vot)) + 
     modeChoiceCoefs$transitFreq * longData$freq.bus + 
-    modeChoiceCoefs$'intermetro:3bus'*longData$intermetro + 
+    modeChoiceCoefs$'intermetroBusRail'*longData$intermetro + 
     #modeChoiceCoefs$'partyBusRail' * longData$party + 
     modeChoiceCoefs$'overnight:3bus' * longData$overnight
 } else {
@@ -349,7 +365,7 @@ if (purp=="Leisure") f2 = formula(choice ~ log_civic + intrametro + intrarural +
               log_hotel + log_sightseeing + log_outdoors + log_skiing + niagara + log_td  | 0 |0)
 
 if (purp=="Business") f2 = formula(choice ~ log_civic + intrarural + intermetro + dtLogsum + onLogsum + 
-                                    log_hotel + log_sightseeing + log_td| 0 |0)
+                                    log_hotel + log_sightseeing | 0 |0)
 
 if (purp=="Visit") f = formula(choice ~ log_civic + intrametro + intrarural + dtLogsum + onLogsum + 
                                  log_hotel + log_sightseeing  + log_td| 0 |0)
@@ -360,4 +376,8 @@ summary(dcModel)
 
 fileName = paste("output/dcModelLogsum",purp,".csv",sep="")
 write.csv(x=summary(dcModel2)$CoefTable, file = fileName)
+write.csv(x="", file = fileName, append = TRUE)
+write.csv(x=dcModel2$logLik, file = fileName, append = TRUE)
+
+}
 
