@@ -367,7 +367,7 @@ if (purp=="Leisure") f2 = formula(choice ~ log_civic + intrametro + intrarural +
 if (purp=="Business") f2 = formula(choice ~ log_civic + intrarural + intermetro + dtLogsum + onLogsum + 
                                     log_hotel + log_sightseeing | 0 |0)
 
-if (purp=="Visit") f = formula(choice ~ log_civic + intrametro + intrarural + dtLogsum + onLogsum + 
+if (purp=="Visit") f2 = formula(choice ~ log_civic + intrametro + intrarural + dtLogsum + onLogsum + 
                                  log_hotel + log_sightseeing  + log_td| 0 |0)
 
 dcModel2 = mnlogit(data = longData, formula = f2 , choiceVar = "alt", weights = weights,  ncores=16, print.level = 2)
@@ -376,8 +376,8 @@ summary(dcModel)
 
 fileName = paste("output/dcModelLogsum",purp,".csv",sep="")
 write.csv(x=summary(dcModel2)$CoefTable, file = fileName)
-write.table(x="", file = fileName, append = TRUE)
-write.table(x=dcModel2$logLik[1], file = fileName, append = TRUE)
+write.table(x="", file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
+write.table(x=dcModel2$logLik[1], file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
 
 }
 

@@ -14,8 +14,15 @@ library(data.table)
 library(ggplot2)
 
 
+allCanada = TRUE
 
-data = read.csv("data/tsrc_filtered_input_trips.csv")
+
+if (allCanada) {
+  data = read.csv("data/tsrc_all_trips.csv")
+} else {
+  data = read.csv("data/tsrc_filtered_input_trips.csv")
+  }
+
 data_mc = read.csv("data/data_for_modechoice.csv")
 
 
@@ -163,7 +170,14 @@ for (i in 1:nrow(data)){
   #longData<-rbind(longData, alternatives)
 }
 longData = rbindlist(list1)
-fwrite(x=longData, file="processed/longData2.csv", append = FALSE, col.names = TRUE, sep="," , row.names = FALSE)
+
+
+if (allCanada){
+  fwrite(x=longData, file="processed/longDataAllCanada.csv", append = FALSE, col.names = TRUE, sep="," , row.names = FALSE)
+} else {
+  fwrite(x=longData, file="processed/longData2.csv", append = FALSE, col.names = TRUE, sep="," , row.names = FALSE)
+}
+  
 
 
 
