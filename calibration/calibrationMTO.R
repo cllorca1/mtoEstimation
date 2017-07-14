@@ -16,6 +16,7 @@ districts = read.csv("processed/districtsCanada.csv")
 id = districts$id
 district = districts$type2
 
+includeExtCan = FALSE
 
 #read model trips
 
@@ -53,6 +54,7 @@ modelTrips$daytrip[modelTrips$daytrip=="daytrip"] = 1
 
 
 #if all zones in the comparison
+if (includeExtCan) {
 modelTrips = tripData %>% filter(international == "false", tripState!="away") %>%
   select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, daytrip = tripState ) %>%
   filter(mode != 0)
@@ -60,14 +62,14 @@ modelTrips$source = "model"
 modelTrips$daytrip = as.character(modelTrips$daytrip)
 modelTrips$daytrip[modelTrips$daytrip!="daytrip"] = 0
 modelTrips$daytrip[modelTrips$daytrip=="daytrip"] = 1
-
+}
 
 
 
 #read survey trips
 
 setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/domestic")
-wideData = subset(fread(file="processed/longData2.csv", header = T, sep = ','), choice == TRUE)
+#wideData = subset(fread(file="processed/longData2.csv", header = T, sep = ','), choice == TRUE)
 
 #alternatively all the data from J.J
 wideData = fread(file="data/data_for_modechoice.csv", header = T, sep = ',')
@@ -84,6 +86,10 @@ wideData$modeChoice[wideData$mode==5] = "rail"
 wideData$purpose[wideData$purpose == "Leisure"]= "leisure"
 wideData$purpose[wideData$purpose == "Visit"]= "visit"
 wideData$purpose[wideData$purpose == "Business"]= "business"
+wideData$purpose[wideData$purpose == "other"]= "leisure"
+
+
+
 
 
 #asign district
@@ -114,6 +120,7 @@ surveyTrips$daytrip= 1 - surveyTrips$daytrip
 surveyTrips$weight = surveyTrips$weight/365/4
 
 #get all the trips // all Canada //with J.J data
+if (includeExtCan) {
 surveyTrips = wideData %>% 
   select(purp = purpose, dist = dist2, weight = weightT, mode = modeChoice, origin = originDistrict, destination = destinationDistrict, daytrip = nights) %>%
   filter(mode != 0)
@@ -122,17 +129,14 @@ surveyTrips$daytrip[surveyTrips$daytrip>0]= 1
 surveyTrips$daytrip= 1 - surveyTrips$daytrip
 surveyTrips$weight = surveyTrips$weight/365/4
 surveyTrips$purp[surveyTrips$purp=="other"]= "leisure"
-
-###Join trips and analyze for calibration
+}
+###Join trips and analyze for calibration-------------------------------------------------------------------------------------------------------------------------------------------------------
 
 allTrips = rbind(modelTrips, surveyTrips)
 
 
 ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 50, size = 1.2) + xlim(40,2000) +
   facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
-
-ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 100, size = 1.2) + xlim(40,2000) +
-  facet_grid(as.factor(daytrip) ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
 
 #get average trip distances
 
@@ -150,9 +154,18 @@ ggplot(allTrips) + geom_bar(position = "fill", aes(x=as.factor(source), fill = a
   xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
 
 ggplot(subset(allTrips, purp == "business")) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(as.factor(origin) ~ as.factor(destination)) + 
-  xlab("source") + ylab("share (%)") + theme_light() + labs(fill = "mode")
+  xlab("source") + ylab("share (%)") + theme_light() + labs(fill = "mode") 
 
 modeShare = allTrips %>% filter(dist < 2000) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
+
+#comparison between self reported and network distance----------------------------------------------------------------------------------------------------------------------------------------
+
+ggplot(subset(wideData, modeChoice != "0"), aes(x=td, y=dist2, color=modeChoice)) +
+  geom_point(size = 1, alpha = 0.2) + ylim(0,5000) + xlim(0,5000) + xlab("network distance (km)") +
+  ylab("self-reported/survey distance (km)") + theme_light() + geom_abline(slope=1, intercept = 0)
+
+
+
 
 
 

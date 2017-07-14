@@ -249,6 +249,8 @@ longData$onLogsum = longData$overnight*longData$logsum
 
 fm <- formula(choice~ population + logsum |0|0)
 fm <- formula(choice~ population + dtLogsum + onLogsum|0|0) # selected !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+fm <- formula(choice~ log(population) + dtLogsum + onLogsum|0|0) # selected !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 fm <- formula(choice~ hotel + alt_is_metro + dtLogsum + onLogsum|0|0) 
 
 fm <- formula(choice~ hotel + alt_is_metro + dtLogsum + onLogsum|0|0) #for inbound leisure
