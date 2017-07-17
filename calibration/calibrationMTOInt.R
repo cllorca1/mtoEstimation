@@ -9,7 +9,7 @@ library(ggplot2)
 library(dplyr)
 library(data.table)
 
-outbound = FALSE
+outbound = TRUE
 
 
 #read zone2 districts
@@ -118,7 +118,12 @@ modelTrips$source = "model"
 
 allTrips = rbind(surveyTrips, modelTrips)
 
-ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 150, size = 1.2) + xlim(40,4000) +
+
+#finish data collection
+
+
+
+ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 250, size = 1.2) + xlim(40,4000) +
   facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
 
 ggplot(allTrips, aes(x=dist, weight=weight,color = as.factor(source))) + stat_ecdf(size = 1.2) + xlim(0,4000) +
@@ -127,11 +132,7 @@ ggplot(allTrips, aes(x=dist, weight=weight,color = as.factor(source))) + stat_ec
 ggplot(allTrips) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(. ~ purp) + 
   xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
 
-ggplot(allTrips) + geom_bar(aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(. ~ purp) + 
-  xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
 
-ggplot(subset(allTrips, purp == "leisure")) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(as.factor(origin) ~ as.factor(destination)) + 
-  xlab("source") + ylab("share (%)") + theme_light() + labs(fill = "mode")
 
 
 

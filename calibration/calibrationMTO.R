@@ -134,15 +134,6 @@ surveyTrips$purp[surveyTrips$purp=="other"]= "leisure"
 
 allTrips = rbind(modelTrips, surveyTrips)
 
-
-ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 50, size = 1.2) + xlim(40,2000) +
-  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
-
-#get average trip distances
-
-distanceTable = allTrips %>% filter(dist < 2000) %>% group_by(source, purp) %>% summarize(sumW = sum(weight), sumWD = sum(weight*dist))
-distanceTable$avgD = distanceTable$sumWD / distanceTable$sumW
-
 #rename modes:
 
 allTrips$mode[allTrips$mode=="air"] = "1:air"
@@ -150,19 +141,42 @@ allTrips$mode[allTrips$mode=="auto"] = "0:auto"
 allTrips$mode[allTrips$mode=="bus"] = "2:bus"
 allTrips$mode[allTrips$mode=="rail"] = "3:rail"
 
-ggplot(allTrips) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(. ~ purp) + 
+
+#DISTANCES
+
+ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 50, size = 1.2) + xlim(40,2000) +
+  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
+
+
+ggplot(allTrips, aes(x=dist, weight=weight, color = as.factor(source))) + stat_ecdf(size = 1.2) + xlim(0,2000) +
+  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
+
+#get average trip distances
+
+distanceTable = allTrips %>% filter(dist < 2000) %>% group_by(source, purp) %>% summarize(sumW = sum(weight), sumWD = sum(weight*dist))
+distanceTable$avgD = distanceTable$sumWD / distanceTable$sumW
+
+#MODAL SHARES
+
+ggplot(subset(allTrips,origin == "0_S_Ontario" | origin =="1_N_Ontario")) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(. ~ purp) + 
   xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
 
-ggplot(subset(allTrips, purp == "business")) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(as.factor(origin) ~ as.factor(destination)) + 
-  xlab("source") + ylab("share (%)") + theme_light() + labs(fill = "mode") 
+ggplot(subset(allTrips,!(origin == "0_S_Ontario" | origin =="1_N_Ontario"))) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(. ~ purp) + 
+  xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
 
-modeShare = allTrips %>% filter(dist < 2000) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
+
+modeShare = allTrips %>% filter() %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
+
+modeShareOntario = allTrips %>% filter((origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
+
+modeShareCanada = allTrips %>% filter(!(origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
+
+
 
 #comparison between self reported and network distance----------------------------------------------------------------------------------------------------------------------------------------
-
-ggplot(subset(wideData, modeChoice != "0"), aes(x=td, y=dist2, color=modeChoice)) +
-  geom_point(size = 1, alpha = 0.2) + ylim(0,5000) + xlim(0,5000) + xlab("network distance (km)") +
-  ylab("self-reported/survey distance (km)") + theme_light() + geom_abline(slope=1, intercept = 0)
+#ggplot(subset(wideData, modeChoice != "0"), aes(x=td, y=dist2, color=modeChoice)) +
+#  geom_point(size = 1, alpha = 0.2) + ylim(0,5000) + xlim(0,5000) + xlab("network distance (km)") +
+#  ylab("self-reported/survey distance (km)") + theme_light() + geom_abline(slope=1, intercept = 0)
 
 
 
