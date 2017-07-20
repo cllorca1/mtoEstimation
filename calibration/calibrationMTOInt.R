@@ -42,6 +42,7 @@ wideData = rbind(wideData, wideData2)
 if (outbound) {
   wideData = subset(wideData, origProv ==35) #outbound
   wideData$destPlace = wideData$destZone
+  wideData$origPlace = wideData$combinedZone
   #asign district - for outbound
   wideData$originDistrict = "0"
   wideData$destinationDistrict = "0"
@@ -53,6 +54,7 @@ if (outbound) {
 } else {
   wideData = subset(wideData, destPR ==35) #inbound
   wideData$destPlace = wideData$alt
+  wideData$origPlace = wideData$combinedZone
   #asign district - for inbound
   wideData$originDistrict = "0"
   wideData$destinationDistrict = "0"
@@ -65,7 +67,7 @@ if (outbound) {
 
 #select relevant variables
 surveyTrips = wideData  %>%
-  select(purp = purpose, dist = td, weight = weight, mode = modeChoiceString, origin = originDistrict, destination = destinationDistrict, destPlace = destPlace ) %>% 
+  select(purp = purpose, dist = td, weight = weight, mode = modeChoiceString, origin = originDistrict, destination = destinationDistrict, destPlace = destPlace, origPlace = origPlace ) %>% 
   filter(mode != "0")
 surveyTrips$mode = as.factor(as.character(surveyTrips$mode))
 surveyTrips$weight = surveyTrips$weight/365/2
@@ -98,13 +100,13 @@ if (outbound) {
   #CANADIAN
   outboundIntTrips = subset(tripData, tripOriginType == "ONTARIO" & destZoneType == "EXTUS" & international == "true" & tripState != "away")
   modelTrips = outboundIntTrips  %>%
-    select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone ) %>% 
+    select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone, origPlace = tripOriginCombinedZone ) %>% 
     filter(mode != "0")
 } else {
   #VISITORS
   inboundIntTrips = subset(tripData, tripOriginType == "EXTUS" & destZoneType == "ONTARIO" & international == "true" & tripState != "away")
   modelTrips = inboundIntTrips  %>%
-    select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone ) %>% 
+    select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone, origPlace = tripOriginCombinedZone ) %>% 
     filter(mode != "0")
 } 
 
@@ -143,6 +145,11 @@ summaryTable = allTrips %>% group_by(source, purp, destPlace) %>% summarize(coun
 setwd("C:/code/mtoEstimation/calibration")
 write.csv(x=summaryTable, file = "table.csv")
 
+
+summaryTable = allTrips %>% group_by(source, purp, origPlace) %>% summarize(count = sum(weight), dist = sum(dist*weight)/sum(weight))
+
+setwd("C:/code/mtoEstimation/calibration")
+write.csv(x=summaryTable, file = "table.csv")
 
 
 #get average travel distances

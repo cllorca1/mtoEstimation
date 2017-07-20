@@ -40,17 +40,12 @@ for (i in 1:length(purpTableActNo)){
 bc$DestActNo[bc$DestActNo == purpTableActNo[i]] = as.character(purpTablePurp[i])
 }
 
-#to us
-surveyTrips = bc %>% filter(ResCountry == "Canada", Direction.x=="To USA", DestActNo != "na", TripFreqNo > 2) %>%
-  select(dist = travelDistance, weight = Exp24Hr, from = ResCountry, to = Direction.x,purp = DestActNo)
-
-#to canada
-surveyTrips = bc %>% filter(ResCountry == "USA", Direction.x=="To USA", DestActNo != 1 , DestActNo != "na") %>%
-  select(dist = travelDistance, weight = Exp24Hr, from = ResCountry, to = Direction.x, purp = DestActNo)
-
 #all
 
-surveyTrips = bc %>% filter(DestActNo != "na") %>%
+summary(as.factor(bc$DayType))
+
+
+surveyTrips = bc %>% filter(DestActNo != "na", DayType == "Weekday") %>%
   select(dist = travelDistance, weight = Exp24Hr, from = ResCountry, to = Direction.x, purp = DestActNo, orig=orig, dest = dest)
 
 surveyTrips$to[surveyTrips$to == "To USA"] = "EXTUS"
@@ -111,6 +106,6 @@ setwd("C:/projects/MTO Long distance travel/Choice Models/30 Validation")
 write.csv(x=summary, file = "tripsByOD.csv")
 
 
-x = tripData %>% filter(international=="true") %>% 
-  group_by (tripOriginCombinedZone, destZoneType) %>% summarize(count = n())
+# x = tripData %>% filter(international=="true") %>% 
+#   group_by (tripOriginCombinedZone, destZoneType) %>% summarize(count = n())
 
