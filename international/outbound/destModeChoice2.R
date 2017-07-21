@@ -37,6 +37,7 @@ wideData = subset(wideData, origProv ==35) #outbound
 longData = subset(longData, destPR ==35) #inbound
 wideData = subset(wideData, destPR ==35) #inbound
 
+
 #modal shares
 total = sum(wideData$weight)
 wideData %>% group_by(modeChoice) %>% summarize(trips = sum(weight)/total)
