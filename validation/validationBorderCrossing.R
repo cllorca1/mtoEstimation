@@ -8,6 +8,7 @@
 library(ggplot2)
 library(dplyr)
 library(data.table)
+library(tidyr)
 
 #read border-crossing data
 setwd("C:/projects/MTO Long distance travel/Border Crossing")
@@ -42,11 +43,11 @@ bc$DestActNo[bc$DestActNo == purpTableActNo[i]] = as.character(purpTablePurp[i])
 
 #all
 
-summary(as.factor(bc$DayType))
+summary(as.factor(bc$YearStart))
 
 
 surveyTrips = bc %>% filter(DestActNo != "na", DayType == "Weekday") %>%
-  select(dist = travelDistance, weight = Exp24Hr, from = ResCountry, to = Direction.x, purp = DestActNo, orig=orig, dest = dest)
+  select(dist = travelDistance, weight = Exp24Hr, from = ResCountry, to = Direction.x, purp = DestActNo, orig=orig, dest = dest, year = YearStart)
 
 surveyTrips$to[surveyTrips$to == "To USA"] = "EXTUS"
 surveyTrips$to[surveyTrips$to == "To CAN"] = "ONTARIO"
@@ -80,18 +81,27 @@ tripData = subset(tripData,
                          (tripOriginType == "ONTARIO" | destZoneType == "ONTARIO") 
                   & international == "true" & tripMode == "auto")
 
+tripData$year = 2013
 
 modelTrips = tripData %>% filter(tripState!="away") %>%
-  select(dist = travelDistanceLvl2, weight = weight, from = tripOriginType, to = destZoneType, purp = tripPurpose, orig = orig, dest = dest)
+  select(dist = travelDistanceLvl2, weight = weight, from = tripOriginType, to = destZoneType, purp = tripPurpose, orig = orig, dest = dest, year = year)
 
 
 #merge all trips
-
-
 surveyTrips$source = "survey"
 modelTrips$source = "model"
 
+surveyTrips$isSurvey = 1
+surveyTrips$isModel = 0
+modelTrips$isSurvey = 0
+modelTrips$isModel = 1
+
 allTrips = rbind(surveyTrips, modelTrips)
+allTrips$weightSurvey = allTrips$weight*allTrips$isSurvey
+allTrips$weightModel = allTrips$weight*allTrips$isModel
+
+
+
 
 ggplot(subset(allTrips, to == "ONTARIO"), aes(x=dist, color = source,..density.., weights = weight)) + 
  geom_freqpoly(binwidth = 100) + xlim(0,2000) + facet_grid(. ~ purp)
@@ -99,9 +109,9 @@ ggplot(subset(allTrips, to == "ONTARIO"), aes(x=dist, color = source,..density..
 ggplot(subset(allTrips, to == "EXTUS"), aes(x=dist, color = source,..density.., weights = weight)) + 
   geom_freqpoly(binwidth = 100) + xlim(0,2000) + facet_grid(. ~ purp)
 
+#analyze specific O/D pairs with a night number of border crossing traffic?
 
-
-summary = allTrips  %>% group_by(source,orig,dest) %>% summarise(count = sum(weight))
+summary = allTrips  %>% group_by(source,orig,dest, year) %>% summarise(count = sum(weight)) %>% tidyr::spread(year,count)
 setwd("C:/projects/MTO Long distance travel/Choice Models/30 Validation")
 write.csv(x=summary, file = "tripsByOD.csv")
 

@@ -15,6 +15,9 @@ setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/i
 
 #read data ----------------------------------------------------------------------------------------------
 
+outbound = TRUE
+business = FALSE
+
 fileNames = c("Leisure", "Business", "visit")
 
 #temporary - use only leisure
@@ -30,13 +33,13 @@ wideData = read.csv("processed/wideDataVisit.csv")
 
 
 #this filters only from Ontario
-longData = subset(longData, origProv ==35) #outbound
-wideData = subset(wideData, origProv ==35) #outbound
-
-
-longData = subset(longData, destPR ==35) #inbound
-wideData = subset(wideData, destPR ==35) #inbound
-
+if(outbound){
+  longData = subset(longData, origProv ==35) #outbound
+  wideData = subset(wideData, origProv ==35) #outbound
+} else {
+  longData = subset(longData, destPR ==35) #inbound
+  wideData = subset(wideData, destPR ==35) #inbound
+}
 
 #modal shares
 total = sum(wideData$weight)
@@ -82,9 +85,14 @@ wideData$modeChoice = as.factor(as.character(wideData$modeChoice))
 
 #weight vector for mnlogit
 weightsMnlogit = wideData$weight
-dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = 26:33) #outbound dataset
-dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = 31:38) #inbound dataset
-dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = c(31:33, 35:37)) #inbound dataset for business - no one chose rail
+
+if (outbound) {
+  dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = 26:33) #outbound dataset
+} else {
+  dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = 31:38) #inbound dataset
+  dataModelMn = mlogit.data(wideData, choice = "modeChoice", shape = "wide", sep = ".", varying = c(31:33, 35:37)) #inbound dataset for business - no one chose rail
+  }
+
 
 #need to re-convert modeChoiceString because it was wrong taken from long-data transformation
 dataModelMn$modeChoiceString[dataModelMn$alt=="air"] = "1air"
@@ -95,8 +103,11 @@ dataModelMn$modeChoiceString[dataModelMn$alt=="rail"] = "2rail"
 dataModelMn$modeChoiceString = as.factor(dataModelMn$modeChoiceString)
 
 #vot
-vot = 32 #for visit and leisure.
-vot = 65 #for business
+if (business){
+  vot = 65 #for business
+} else {
+  vot = 32 #for visit and leisure.
+}
 
 dataModelMn$gTime = dataModelMn$tt + 60 * dataModelMn$price/ vot 
 
@@ -117,13 +128,20 @@ dataModelMn$isRail[dataModelMn$alt=="rail"] = 1
 dataModelMn$onAir = dataModelMn$isAir * dataModelMn$overnight
 dataModelMn$onBus = dataModelMn$isBus * dataModelMn$overnight
 dataModelMn$onAuto = dataModelMn$isAuto * dataModelMn$overnight
-dataModelMn$partySizeAir = dataModelMn$isAir * dataModelMn$partySize #outbound
-dataModelMn$partySizeBus = dataModelMn$isBus * dataModelMn$partySize
-dataModelMn$partySizeAuto = dataModelMn$isAuto * dataModelMn$partySize
 
-dataModelMn$partySizeAir = dataModelMn$isAir * dataModelMn$travelParty #inbound
-dataModelMn$partySizeBus = dataModelMn$isBus * dataModelMn$travelParty
-dataModelMn$partySizeAuto = dataModelMn$isAuto * dataModelMn$travelParty
+if (outbound){
+  dataModelMn$partySizeAir = dataModelMn$isAir * dataModelMn$partySize #outbound
+  dataModelMn$partySizeBus = dataModelMn$isBus * dataModelMn$partySize
+  dataModelMn$partySizeAuto = dataModelMn$isAuto * dataModelMn$partySize
+} else {
+  dataModelMn$partySizeAir = dataModelMn$isAir * dataModelMn$travelParty #inbound
+  dataModelMn$partySizeBus = dataModelMn$isBus * dataModelMn$travelParty
+  dataModelMn$partySizeAuto = dataModelMn$isAuto * dataModelMn$travelParty
+}
+
+
+
+
 
 
 dataModelMn$onGTime = dataModelMn$tt * dataModelMn$overnight + 60 * dataModelMn$price/ vot 
