@@ -46,7 +46,7 @@ bc$DestActNo[bc$DestActNo == purpTableActNo[i]] = as.character(purpTablePurp[i])
 summary(as.factor(bc$YearStart))
 
 
-surveyTrips = bc %>% filter(DestActNo != "na", DayType == "Weekday") %>%
+surveyTrips = bc %>% filter(DestActNo != "na") %>%
   select(dist = travelDistance, weight = Exp24Hr, from = ResCountry, to = Direction.x, purp = DestActNo, orig=orig, dest = dest, year = YearStart)
 
 surveyTrips$to[surveyTrips$to == "To USA"] = "EXTUS"
@@ -107,7 +107,14 @@ ggplot(subset(allTrips, to == "ONTARIO"), aes(x=dist, color = source,..density..
  geom_freqpoly(binwidth = 100) + xlim(0,2000) + facet_grid(. ~ purp)
 
 ggplot(subset(allTrips, to == "EXTUS"), aes(x=dist, color = source,..density.., weights = weight)) + 
-  geom_freqpoly(binwidth = 100) + xlim(0,2000) + facet_grid(. ~ purp)
+  geom_freqpoly(binwidth = 50) + xlim(0,2000) + facet_grid(. ~ purp)
+
+ggplot(subset(allTrips, to == "EXTUS"), aes(x=dist, color = source,..density.., weights = weight)) + 
+  geom_freqpoly(binwidth = 250) + xlim(0,3000) + facet_grid(. ~ purp)
+
+ggplot(subset(allTrips, to == "EXTUS"), aes(x=dist, color = source,weights = weight)) + 
+  stat_ecdf() + scale_x_log10() + facet_grid(. ~ purp)
+
 
 #analyze specific O/D pairs with a night number of border crossing traffic?
 
@@ -116,6 +123,9 @@ setwd("C:/projects/MTO Long distance travel/Choice Models/30 Validation")
 write.csv(x=summary, file = "tripsByOD.csv")
 
 
-# x = tripData %>% filter(international=="true") %>% 
-#   group_by (tripOriginCombinedZone, destZoneType) %>% summarize(count = n())
+#output trips to US by zone in the model
+x = tripData %>% filter(international == "true", destZoneType == "EXTUS") %>%
+  group_by (destZone) %>% summarize(count = n(), dist = mean(travelDistanceLvl1), minDist = min(travelDistanceLvl1))
 
+setwd("c:/projects/MTO Long Distance Travel/Choice models/06 disaggregation")
+write.csv(x, "tripsToUS.csv")

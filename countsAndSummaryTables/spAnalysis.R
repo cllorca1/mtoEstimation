@@ -12,19 +12,26 @@ library(dplyr)
 
 setwd("C:/models/mto")
 
-pp = fread("sp/Final_persons.csv")
-hh = fread("sp/Final_households.csv")
+pp = fread("sp/Final_persons_TRESO.csv")
+hh = fread("sp/Final_households_TRESO.csv")
 
 
 names(pp)
 names(hh)
 
+pp2 = subset(pp, !is.na(Treso_ID))
+hh2 = subset(hh, !is.na(Treso_ID))
+
+write.csv(hh2, file = "Final_Households_TRESO_2.csv")
 
 
-zones = sort(unique(hh$TRESO_ID))
+4016969
+subset(pp, hhid == 4016969)
+
+zones = sort(unique(pp$Treso_ID))
 
 summary(zones)
 
-plot(zones)
+length(zones)
 
-subset(zones, zones> 9000 & zones < 9900)
+
