@@ -9,7 +9,7 @@ library(ggplot2)
 library(dplyr)
 library(data.table)
 
-outbound = TRUE
+outbound = FALSE
 
 
 #read zone2 districts
@@ -125,7 +125,7 @@ allTrips = rbind(surveyTrips, modelTrips)
 
 
 
-ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 250, size = 1.2) + xlim(40,4000) +
+ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 150, size = 1.2) + xlim(40,4000) +
   facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
 
 ggplot(allTrips, aes(x=dist, weight=weight,color = as.factor(source))) + stat_ecdf(size = 1.2) + xlim(0,4000) +

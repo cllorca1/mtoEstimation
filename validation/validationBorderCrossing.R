@@ -14,12 +14,15 @@ library(tidyr)
 setwd("C:/projects/MTO Long distance travel/Border Crossing")
 bcData = fread(file="surveyData.txt", header = T, sep = ',')
 
+#read border crossing o and d
 bcDataRoutes = fread(file="routeInfo.txt", header = T, sep = ',')
 bcDataRoutes$travelDistance = bcDataRoutes$CAN + bcDataRoutes$US
 
+#read conversion between border crossing zones and CD
 bc2Level4 = fread(file="zoning/bc2Level4.csv", header = T, sep = ',')
 model2Level4 = fread(file="zoning/model2Level4.csv", header = T, sep = ',')
 
+#join with zoning information
 bc = full_join(x = bcData, y = bcDataRoutes, by = "RecordID")
 
 bcZone = bc2Level4$Zone
@@ -32,7 +35,7 @@ for (i in 1:length(bcZone)){
   bc$dest[bc$DestZone==bcZone[i]]=compZone[i]
 }
 
-
+#read pruposes
 purpTable = read.csv("purposeConversionTable.csv")
 purpTableActNo = purpTable$ActNo
 purpTablePurp= as.array(purpTable$code)
@@ -41,9 +44,39 @@ for (i in 1:length(purpTableActNo)){
 bc$DestActNo[bc$DestActNo == purpTableActNo[i]] = as.character(purpTablePurp[i])
 }
 
-#all
+#summaryze by year
+bc %>% group_by(YearStart, LocDesc) %>%
+  summarize(records= n()) %>%
+  tidyr::spread(YearStart, records)
 
-summary(as.factor(bc$YearStart))
+#count number of years
+years_by_location = bc %>% group_by(LocNo, LocDesc) %>% summarize(records= length(unique(YearStart)))
+#same but with number of days
+days_by_location = bc %>% group_by(LocNo, LocDesc) %>% summarize(records= length(unique(DateStart)))
+
+#add to the border crossing data the number of oberseved days
+bc$numOfDays=0
+for (i in 1:nrow(days_by_location)){
+  bc$numOfDays[bc$LocNo == days_by_location$LocNo[i]]= days_by_location$records[i]
+}
+
+#get the OD pairs by location considering weight
+odTable = bc %>%
+  dplyr::group_by(orig, dest, LocDesc) %>%
+  dplyr::summarize(sumWeight= sum(Exp24Hr)) %>%
+  tidyr::spread(LocDesc, sumWeight)
+
+odTable = bc %>%
+  dplyr::group_by(orig, dest, LocDesc) %>%
+  dplyr::summarize(sumWeight= sum(Exp24Hr)) %>%
+  tidyr::spread(LocDesc, sumWeight)
+  
+odTableCorrected = bc %>%
+    dplyr::group_by(orig, dest) %>%
+    dplyr::summarize(sumWeight= sum(Exp24Hr/numOfDays)) 
+
+
+
 
 
 surveyTrips = bc %>% filter(DestActNo != "na") %>%
@@ -74,6 +107,16 @@ for (i in 1:length(modelZones)){
   tripData$orig[tripData$tripOriginCombinedZone==modelZones[i]]=compZone[i]
   tripData$dest[tripData$tripDestCombinedZone==modelZones[i]]=compZone[i]
 }
+
+#get the equivalent table by od pair
+
+odTableCorrectedModel = tripData %>%
+  dplyr::group_by(orig, dest) %>%
+  dplyr::summarize(sumWeight= sum(weight)) 
+
+#store both OD tables
+merge(odTableCorrected, odTableCorrectedModel, by(c(("orig", "dest")))
+
 
 
 #plot tt distribution

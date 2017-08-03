@@ -107,7 +107,7 @@ wideData$nights = wideData$triptype
 # setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/canadian")
 # wideDataITS = subset(fread(file="processed/longData2.csv", header = T, sep = ','), choice == TRUE)
 
-domesticTripsFromToOntarioTSRC = subset(wideData, lvl2_orig < 61 | lvl2_dest < 61 )
+domesticTripsFromToOntarioTSRC = subset(wideData, lvl2_orig < 69 | lvl2_dest < 69 )
 # internationalTripsFromToOntarioTSRC = subset(wideData, lvl2_orig < 61 | lvl2_dest < 61 )
 
 #get all the trips 

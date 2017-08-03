@@ -107,3 +107,12 @@ setwd("c:/projects/MTO Long Distance Travel/Choice models/06 disaggregation")
 
 write.csv(x=count1, file = "tripsbyDest21-22.csv")
 write.csv(x=count1byO, file = "tripsbyOrig21-22.csv")
+
+
+#quick test to verify is some alternatives in ontario were selected by overseas visitors, which was the case. 
+
+tripData2 %>% filter(tripOriginType == "EXTOVERSEAS", destZoneType == "EXTCANADA") %>%
+  group_by(tripPurpose) %>%
+  summarize(n = n())
+
+
