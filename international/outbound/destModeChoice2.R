@@ -275,6 +275,10 @@ longData$log_hotel[is.infinite(longData$log_hotel)] = 0
 longData$log_skiing = log(longData$skiing)
 longData$log_skiing[is.infinite(longData$log_skiing)] = 0
 
+longData$niagara = 0
+longData$niagara[longData$alt == 30] = 1
+
+
 #dest choice w/logsum ---------------------------------------------------------------------------------------------------
 
 fm <- formula(choice~ population + logsum |0|0)
@@ -283,7 +287,7 @@ fm <- formula(choice~ log(population) + dtLogsum + onLogsum|0|0) # selected !!!!
 
 fm <- formula(choice ~ hotel + alt_is_metro + dtLogsum + onLogsum|0|0) 
 
-fm <- formula(choice ~ log_hotel  + alt_is_metro + dtLogsum + onLogsum|0|0) #for inbound leisure
+fm <- formula(choice ~ log_hotel  + alt_is_metro + dtLogsum + onLogsum + niagara|0|0) #for inbound leisure
 
 fm <- formula(choice ~ civic + alt_is_metro + dtLogsum + onLogsum|0|0) 
 

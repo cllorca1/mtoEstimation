@@ -48,36 +48,27 @@ bc$purpose[bc$DestActNo == purpTableActNo[i] & bc$OrigActNo == 1] = as.character
 bc$purpose[bc$OrigActNo != 1] = "na"
 
 #summaryze by year
-bc %>% 
-  group_by(DayType, YearStart, LocDesc) %>%
-  summarize(records= sum(Exp24Hr)) %>%
-  tidyr::spread(YearStart, records)
-
-#the same by direction
+#to CANADA
 bc %>% 
   filter(Direction.x == "To CAN") %>% 
   group_by(DayType, YearStart, LocDesc) %>%
   summarize(records= sum(Exp24Hr)) %>%
   tidyr::spread(YearStart, records)
 
-#the same by direction
+#to USA
 bc %>% 
   filter(Direction.x == "To USA") %>% 
   group_by(DayType, YearStart, LocDesc) %>%
   summarize(records= sum(Exp24Hr)) %>%
   tidyr::spread(YearStart, records)
 
-
+#number of years
 bc %>%
   group_by(DayType, YearStart, LocDesc) %>%
   summarize(records= length(unique(DateStart))) %>%
   tidyr::spread(YearStart, records)
 
 #test the classifications into daytypes by year
-bc %>%
-  group_by(DayType, YearStart) %>%
-  summarize(records= length(unique(DateStart))) %>%
-  tidyr::spread(DayType, records)
 
 #count number of years or each location and daytype
 years_by_location = bc %>% 
@@ -104,7 +95,7 @@ for (i in 1:nrow(years_by_location)){
   bc$numOfYears[bc$LocNo == years_by_location$LocNo[i] & bc$DayType == years_by_location$DayType[i]]= years_by_location$records[i]
 }
 
-summary(bc$numOfYears)
+#summary(bc$numOfYears)
 
 #get the OD pairs by location considering weight
 # odTable = bc %>%
@@ -124,7 +115,6 @@ odTableCorrected = bc %>%
     dplyr::summarize(trips= sum(Exp24Hr/numOfYears), years = mean(numOfYears)) 
 
 #aggregate dayTypes? 
-
 odTableCorrected = odTableCorrected %>% 
   dplyr::group_by(DayType, orig, dest) %>%
   dplyr::summarize(trips = sum(trips)) %>% 
@@ -143,12 +133,12 @@ bc %>%
 
 #get a matrix of orig to dest activity
 
-purposeMatrix = bc %>%
-  #dplyr::filter(YearStart > 2009) %>%
-  dplyr::filter(DayType == "Weekday") %>% 
-  dplyr::group_by(OrigAct, DestAct) %>%
-  dplyr::summarize(trips = sum(Exp24Hr/numOfYears)) %>%
-  tidyr::spread(DestAct, trips)
+# purposeMatrix = bc %>%
+#   #dplyr::filter(YearStart > 2009) %>%
+#   dplyr::filter(DayType == "Weekday") %>% 
+#   dplyr::group_by(OrigAct, DestAct) %>%
+#   dplyr::summarize(trips = sum(Exp24Hr/numOfYears)) %>%
+#   tidyr::spread(DestAct, trips)
 
 #read model trips
 setwd("C:/models/mto/output")
@@ -179,7 +169,9 @@ odTableCorrectedModel = tripData %>%
   dplyr::summarize(trips= sum(weight)) 
 
 #merge OD tables
-odMerged = merge(odTableCorrected, odTableCorrectedModel, by=c("orig", "dest"), suffixes= c(".survey", ".model"))
+odMerged = merge(odTableCorrected, odTableCorrectedModel, by=c("orig", "dest", "purpose"), suffixes= c(".survey", ".model"))
+
+
 
 #subseting trips by type of origin
 odMerged$type = 0
@@ -187,9 +179,9 @@ odMerged$type = 0
 odMerged$type[odMerged$orig > 117 & odMerged$orig < 3500 & odMerged$dest > 3499] = "fromUS"
 odMerged$type[odMerged$orig > 3499 & odMerged$dest < 3500 & odMerged$dest> 117 ] = "fromOntario"
 
-summary(as.factor(odMerged$type))
+#summary(as.factor(odMerged$type))
 
-#remove the "other" type of trips - externals to externals
+#remove the "other" type of trips - externals to externals not 
 odMerged = odMerged %>% filter(type != 0)
 
 ggplot(odMerged, aes(x=Weekday, y=trips)) + geom_point() + facet_grid(.~type)
@@ -200,3 +192,20 @@ setwd("C:/projects/MTO Long distance travel/Choice models/30 Validation")
 write.csv(odMerged, "odMergedByDaytype.csv", row.names = FALSE)
 
 #write.csv(purposeMatrix, "purposeMatrix.csv", row.names = FALSE)
+
+#analysis of the results
+
+#count of trips by source on weekdays
+
+odMerged %>% group_by(type) %>%
+  summarize(model = sum(trips), survey.weekdays = sum(Weekday, na.rm = TRUE), survey.saturday = sum (Saturday, na.rm = TRUE), survey.sunday = sum(Sunday,na.rm = TRUE))
+
+
+
+
+
+
+
+
+
+
