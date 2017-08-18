@@ -167,8 +167,8 @@ print(distanceTable %>% select(source, purp, avgD) %>% tidyr::spread(source, avg
 ggplot(subset(allTrips,origin == "0_S_Ontario" | origin =="1_N_Ontario")) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(. ~ purp) + 
   xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
 
-#ggplot(subset(allTrips,!(origin == "0_S_Ontario" | origin =="1_N_Ontario"))) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(. ~ purp) + 
-#  xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
+ggplot(subset(allTrips,!(origin == "0_S_Ontario" | origin =="1_N_Ontario"))) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(. ~ purp) + 
+  xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
 
 
 modeShareOntario = allTrips %>%

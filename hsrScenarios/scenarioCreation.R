@@ -1,17 +1,29 @@
 
 
 
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(rhdf5)
+
 #read the hsr network description
 
 #travel time data
 setwd("C:/projects/MTO Long distance travel/publications/milan workshop/scenario")
 travelTimeDf = read.csv("hsrMatrix.csv")
-hsrMatrix = as.matrix(travelTimeDf[2:7])
+
+#travel time between served stations
+hsrMatrix = as.matrix(travelTimeDf[2:7]) #this is for the mto proposed tts
+#sameByscenario
+
+hsrMatrix200 = as.matrix(read.csv("hsrMatrix200.csv")[2:7]) 
+hsrMatrix300 = as.matrix(read.csv("hsrMatrix300.csv")[2:7]) 
+hsrMatrix400 = as.matrix(read.csv("hsrMatrix400.csv")[2:7]) 
 
 
 #station data
-stations = c(21,22,26,36,47,43)
-accessTimes = c(33.57, 52.11, 58, 30.89, 26.5, 22)
+hsrStations = c(21,22,26,36,47,43)
+hsrAccessTime = c(33.57, 52.11, 58, 30.89, 26.5, 22)
 
 
 #read original travel time
@@ -29,66 +41,165 @@ variableName = c("tt", "price", "freq", "transf")
 
 #Now we only have tt an price for mode-specific data
 
-tt<-readMatrixOMX(newFileName[1], matrixName)
+tt0<-readMatrixOMX(newFileName[1], matrixName)
+price0<-readMatrixOMX(newFileName[2], matrixName)
 
-price<-readMatrixOMX(newFileName[2], matrixName)
+td0 <- readMatrixOMX("input/combinedDistanceNAModelEstV2.omx", "auto_distance" )
 
 
-#compare new and existing tt between served stations - zones
+#compare new and existing tt between served stations - zones, as well as with distance (auto_distance)
 
 beforeHsrMatrix = matrix(nrow = 6, ncol  = 6)
+distanceHsrMatrix = matrix(nrow = 6, ncol  = 6)
 
 for (i in 1:6){
   for (j in 1:6){
-    beforeHsrMatrix[i,j] = tt[stations[i], stations[j]]
+    beforeHsrMatrix[i,j] = tt0[hsrStations[i], hsrStations[j]]
+    distanceHsrMatrix[i,j] = td0[hsrStations[i], hsrStations[j]]
+  }
+}
+
+for (i in 1:6){
+  for (j in 1:6){
+    if(i!=j & !is.na(beforeHsrMatrix[i,j])){
+      if(hsrMatrix200[i,j] > beforeHsrMatrix[i,j] ){
+        hsrMatrix200[i,j] = beforeHsrMatrix[i,j]
+      }
+      if(hsrMatrix300[i,j] > beforeHsrMatrix[i,j] ){
+        hsrMatrix300[i,j] = beforeHsrMatrix[i,j]
+      }
+      if(hsrMatrix400[i,j] > beforeHsrMatrix[i,j] ){
+        hsrMatrix400[i,j] = beforeHsrMatrix[i,j]
+      }
+    }
+    
   }
 }
 
 
 #process the original travel time to convert it to the new travel time
 
-ttHsr = matrix(-1, nrow = 167, ncol = 167)
+tt200 = matrix(-1, nrow = 167, ncol = 167)
+tt300 = matrix(-1, nrow = 167, ncol = 167)
+tt400 = matrix(-1, nrow = 167, ncol = 167)
 
 priceHsr = matrix(-1, nrow = 167, ncol = 167)
 priceFactor = 2
 
 #1. input the new travel times between served stations
 
-for (i in 1:length(stations)){
-  for (j in 1:length(stations)){
-    if(i != j){
-    ttHsr[stations[i],stations[j]] = hsrMatrix[i,j]
-    priceHsr[stations[i],stations[j]] = price[stations[i],stations[j]]*priceFactor
-    print(paste(stations[i], stations[j] , tt[stations[i],stations[j]] - ttHsr[stations[i],stations[j]], sep = " - "))
+
+for (o in 1:167){
+  for (d in 1:167){
+    if (is.na(tt0[o,d])){
+      #currently no connection by train
+    } else {
+      #currently one can travel by train
+      lowerTime200 = tt0[o,d]
+      lowerTime300 = tt0[o,d]
+      lowerTime400 = tt0[o,d]
+      #loop all the possible connections using hsr
+      for (i in 1:length(hsrStations)){
+        for (j in 1:length(hsrStations)){
+            if (o==i & d==j){
+            #both ends at hsr
+              timeUsing200 = hsrMatrix[i,j]
+            } else if (o==i){
+              timeUsing200 = hsrMatrix200[i,j] + tt0[hsrStations[j],d] - hsrAccessTime[j]
+            #origin at hsr
+            } else if (d==j){
+              timeUsing200 = tt0[o,hsrStations[i]] + hsrMatrix200[i,j] - hsrAccessTime[i]
+            #dest at hsr
+            } else {
+              timeUsing200 = tt0[o,hsrStations[i]] + hsrMatrix200[i,j] + tt0[hsrStations[j],d] - hsrAccessTime[i] - hsrAccessTime[j]
+            }
+          
+          if (!is.na(timeUsing200) & timeUsing200 < lowerTime200){
+            lowerTime200 = timeUsing200
+          }
+        }
+      }
+      tt200[o,d] = lowerTime200
     }
   }
 }
 
-for (o in 1:dim(tt)[1]){
-  for (d in 1:dim(tt)[2]){
-    bestTime = tt[o,d]
-    ttHsr[o,d] = bestTime 
-    basePrice = price[o,d]
+
+
+
+
+
+for (i in 1:length(hsrStations)){
+  for (j in 1:length(hsrStations)){
+    if(i != j){
+      tt200[hsrStations[i],hsrStations[j]] = hsrMatrix200[i,j]
+      tt300[hsrStations[i],hsrStations[j]] = hsrMatrix300[i,j]
+      tt400[hsrStations[i],hsrStations[j]] = hsrMatrix400[i,j]
+      priceHsr[hsrStations[i],hsrStations[j]] = price0[hsrStations[i],hsrStations[j]]*priceFactor
+      print(paste(hsrStations[i], hsrStations[j] , tt0[hsrStations[i],hsrStations[j]] - tt200[hsrStations[i],hsrStations[j]], sep = " - "))
+    }
+  }
+}
+
+
+for (o in 1:dim(tt0)[1]){
+  for (d in 1:dim(tt0)[2]){
+    lowerTime200 = tt0[o,d]
+    lowerTime300 = tt0[o,d]
+    lowerTime400 = tt0[o,d]
+    
+    if(!(o %in% hsrStations & d %in% hsrStations)){
+    tt200[o,d] = lowerTime200
+    tt300[o,d] = lowerTime300 
+    tt400[o,d] = lowerTime400 
+    
+    } #otherwise keep the already obtained value
+    
+    basePrice = price0[o,d]
     
     
-    priceHsr[o,d] = price[o,d]
-    for (i in 1:length(stations)){
-      for (j in 1:length(stations)){
-        if (o!= i & d != j){
-          
-            timeUsingHsr = tt[o,stations[i]] + hsrMatrix[i,j] + tt[stations[j],d] - accessTimes[i] - accessTimes[j]
-            percentUsingHsr = hsrMatrix[i,j] / timeUsingHsr
-                                                                   
-            if(!is.na(timeUsingHsr) & percentUsingHsr > 0){
-              
-            if (timeUsingHsr < bestTime | is.na(bestTime)){
-                bestTime = timeUsingHsr
-                print(paste(o,d,bestTime,sep = "-"))
-                ttHsr[o,d] = bestTime 
-                priceHsr[o,d] = (1 + percentUsingHsr*priceFactor)*price[o,d]
-            }
-            } #if not, do nothing
-         } #add here the option of travelling from one served station to other non served stations
+    priceHsr[o,d] = price0[o,d]
+    for (i in 1:length(hsrStations)){
+      for (j in 1:length(hsrStations)){
+        if (!(o== i & d == j)){
+            #200
+            timeUsing200 = tt0[o,hsrStations[i]] + hsrMatrix200[i,j] + tt0[hsrStations[j],d] - hsrAccessTime[i] - hsrAccessTime[j]
+            percUsing200 = hsrMatrix200[i,j] / timeUsing200
+            
+            if(!is.na(timeUsing200) & percUsing200 > 0){
+              if (timeUsing200 < lowerTime200 & !is.na(lowerTime200)){
+                lowerTime200 = timeUsing200
+                #print(paste(o,d,lowerTime200,sep = "-"))
+                tt200[o,d] = lowerTime200 
+                priceHsr[o,d] = (1 + percUsing200*priceFactor)*price0[o,d]
+              }
+            } 
+            #300
+            timeUsing300 = tt0[o,hsrStations[i]] + hsrMatrix300[i,j] + tt0[hsrStations[j],d] - hsrAccessTime[i] - hsrAccessTime[j]
+            percUsing300 = hsrMatrix300[i,j] / timeUsing300
+            
+            if(!is.na(timeUsing300) & percUsing300 > 0){
+              if (timeUsing300 < lowerTime300 & !is.na(lowerTime300)){
+                lowerTime300 = timeUsing300
+                #print(paste(o,d,lowerTime300,sep = "-"))
+                tt300[o,d] = lowerTime300 
+                priceHsr[o,d] = (1 + percUsing300*priceFactor)*price0[o,d]
+              }
+            } 
+            #400
+            timeUsing400 = tt0[o,hsrStations[i]] + hsrMatrix400[i,j] + tt0[hsrStations[j],d] - hsrAccessTime[i] - hsrAccessTime[j]
+            percUsing400 = hsrMatrix400[i,j] / timeUsing400
+            
+            if(!is.na(timeUsing400) & percUsing400 > 0){
+              if (timeUsing400 < lowerTime400 & !is.na(lowerTime400)){
+                lowerTime400 = timeUsing400
+                print(paste(o,d,lowerTime400,sep = "-"))
+                tt400[o,d] = lowerTime400 
+                priceHsr[o,d] = (1 + percUsing400*priceFactor)*price0[o,d]
+              }
+            } 
+            
+         } 
 
       }
       
@@ -102,13 +213,10 @@ for (o in 1:dim(tt)[1]){
 
 #compare matrices
 
-difTT = tt - ttHsr
-
-ttHsr[-1] = NA
-
-
-tt[43,22]
-ttHsr[43,22]
+tt0[43,22]
+tt200[43,22]
+tt300[43,22]
+tt400[43,22]
 
 #convert to long format
 
@@ -117,50 +225,65 @@ for (i in 1:69){
   for (j in 1:69){
     origin = i
     destination = j
-    ttime = tt[i,j]
-    tthsr = ttHsr[i,j]
-    priceBefore = price[i,j]
+    ttime = tt0[i,j]
+    tthsr = tt200[i,j]
+    priceBefore = price0[i,j]
     priceNow = priceHsr[i,j]
-    row = data.frame(orig = origin, dest = destination, tt = ttime, tthsr = tthsr, price = priceBefore, priceHsr = priceNow)
+    row = data.frame(orig = origin, dest = destination, tt = ttime, tthsr = tthsr, price = priceBefore, priceHsr = priceNow, scen = 200)
+    ttList = rbind(ttList, row)
+    
+    
+    tthsr = tt300[i,j]
+
+    row = data.frame(orig = origin, dest = destination, tt = ttime, tthsr = tthsr, price = priceBefore, priceHsr = priceNow, scen = 300)
+    ttList = rbind(ttList, row)
+    
+    
+    tthsr = tt400[i,j]
+
+    row = data.frame(orig = origin, dest = destination, tt = ttime, tthsr = tthsr, price = priceBefore, priceHsr = priceNow, scen = 400)
     ttList = rbind(ttList, row)
   }
 }
 
-ggplot(ttList, aes(x=tt, y=tthsr)) + geom_point()
+ttList %>% group_by(scen) %>% summarize(avg.red = mean(tt-tthsr, na.rm = TRUE))
+
+ggplot(ttList, aes(x=tt, y=tthsr, color = as.factor(scen))) + geom_point(alpha = 0.2) + ylim(0,2000)
 ggplot(ttList, aes(x=price, y=priceHsr)) + geom_point()
 
-ggplot(ttList, aes(x=tt-tthsr, y = priceHsr - price)) + geom_point()
-
+ggplot(ttList, aes(x=tt-tthsr, color = as.factor(scen))) + stat_density(alpha = 0)
 
 
 #get average time saving
+
+difTimeMatrix = tt0 - tt400
 
 list = data.frame()
 row = data.frame()
 for (origin in 1:69){
   zone = origin
-  difTime = mean(difTT[origin,], na.rm = TRUE)
+  difTime = mean(difTimeMatrix[origin,], na.rm = TRUE)
   row = data.frame(zone = zone, difTime = difTime)
   list = rbind(list,row)
+
 }
 
-
+tt200[is.na(tt200)] = -1
+tt300[is.na(tt300)] = -1
+tt400[is.na(tt400)] = -1
 
 #store the matrices as omx 
 
 setwd("C:/projects/MTO Long distance travel/publications/milan workshop/scenario")
 
-
-
-
-H5close()
-createFileOMX("transitTTModelEstHSR.omx", Numrows = dim(tt)[1], Numcols = dim(tt)[2])
-writeMatrixOMX("transitTTModelEstHSR.omx", ttHsr, "rail", NaValue = -1 )
+writeMatrixOMX("matrix/transitTT200.omx", tt200, "rail", NaValue = -1, Replace = TRUE)
+writeMatrixOMX("matrix/transitTT300.omx", tt300, "rail", NaValue = -1, Replace = TRUE)
+writeMatrixOMX("matrix/transitTT400.omx", tt400, "rail", NaValue = -1, Replace = TRUE)
 
 
 #store tt avg. 
 
-write.csv(list, "avgTimeSaving.csv", row.names = FALSE)
+write.csv(list, "avgTimeSaving400.csv", row.names = FALSE)
 
 
 
