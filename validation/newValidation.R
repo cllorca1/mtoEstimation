@@ -70,6 +70,20 @@ bc %>%
   summarize(records= sum(Exp24Hr)) %>%
   tidyr::spread(YearStart, records)
 
+#the same by direction - testing the results for counts instead
+bc %>% 
+  filter(DayType == "Weekday", Direction.x == "To CAN") %>% 
+  group_by(YearStart, LocDesc) %>%
+  summarize(records= sum(Exp24Hr)) %>%
+  tidyr::spread(YearStart, records)
+
+#the same by direction - testing the results for counts instead
+bc %>% 
+  filter(DayType == "Weekday", Direction.x == "To USA") %>% 
+  group_by(YearStart, LocDesc) %>%
+  summarize(records= sum(Exp24Hr)) %>%
+  tidyr::spread(YearStart, records)
+
 
 bc %>%
   filter(DayType == "Weekday") %>% 
