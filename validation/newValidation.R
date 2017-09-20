@@ -2,8 +2,6 @@
 
 # Carlos Llorca 14.7.17
 
-
-
 #load packages
 library(ggplot2)
 library(dplyr)

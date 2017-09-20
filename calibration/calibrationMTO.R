@@ -186,9 +186,22 @@ modeShareOntario$`3:rail` = modeShareOntario$`3:rail` /modeShareOntario$Total
 print(modeShareOntario)
 
 
+modeShareOntario = allTrips %>%
+  filter(!(origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>%
+  group_by(source, purp,mode) %>%
+  summarize(sumW = sum(weight)) %>% 
+  tidyr::spread(mode, sumW)
+
+modeShareOntario$Total = modeShareOntario$`0:auto` + modeShareOntario$`1:air` + modeShareOntario$`2:bus` +modeShareOntario$`3:rail`
+modeShareOntario$`0:auto` = modeShareOntario$`0:auto`/modeShareOntario$Total
+modeShareOntario$`1:air` = modeShareOntario$`1:air`/modeShareOntario$Total
+modeShareOntario$`2:bus` = modeShareOntario$`2:bus`/modeShareOntario$Total
+modeShareOntario$`3:rail` = modeShareOntario$`3:rail` /modeShareOntario$Total
+
+
 #modeShareCanada = allTrips %>% filter(!(origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
 
-
+print(modeShareOntario)
 
 
 #comparison between self reported and network distance----------------------------------------------------------------------------------------------------------------------------------------
