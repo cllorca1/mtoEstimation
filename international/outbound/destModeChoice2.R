@@ -284,6 +284,11 @@ longData$niagara[longData$alt == 30] = 1
 fm <- formula(choice~ population + logsum |0|0)
 fm <- formula(choice~ population + dtLogsum + onLogsum|0|0) # selected !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 fm <- formula(choice~ log(population) + dtLogsum + onLogsum|0|0) # selected !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+<<<<<<< HEAD
+=======
+
+fm <- formula(choice~ hotel + alt_is_metro + dtLogsum + onLogsum|0|0) 
+>>>>>>> master
 
 fm <- formula(choice ~ hotel + alt_is_metro + dtLogsum + onLogsum|0|0) 
 

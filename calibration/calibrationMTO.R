@@ -96,6 +96,9 @@ wideData$purpose[wideData$purpose == "Business"]= "business"
 wideData$purpose[wideData$purpose == "other"]= "leisure"
 
 
+
+
+
 #asign district
 wideData$originDistrict = "0"
 wideData$destinationDistrict = "0"
@@ -133,7 +136,11 @@ surveyTrips$daytrip[surveyTrips$daytrip>0]= 1
 surveyTrips$daytrip= 1 - surveyTrips$daytrip
 surveyTrips$weight = surveyTrips$weight/365/4
 surveyTrips$purp[surveyTrips$purp=="other"]= "leisure"
+<<<<<<< HEAD
 }
+=======
+
+>>>>>>> master
 ###Join trips and analyze for calibration-------------------------------------------------------------------------------------------------------------------------------------------------------
 
 allTrips = rbind(modelTrips, surveyTrips)
@@ -210,6 +217,13 @@ print(modeShareOntario)
 #  ylab("self-reported/survey distance (km)") + theme_light() + geom_abline(slope=1, intercept = 0)
 
 
+
+
+#comparison between self reported and network distance----------------------------------------------------------------------------------------------------------------------------------------
+
+ggplot(subset(wideData, modeChoice != "0"), aes(x=td, y=dist2, color=modeChoice)) +
+  geom_point(size = 1, alpha = 0.2) + ylim(0,5000) + xlim(0,5000) + xlab("network distance (km)") +
+  ylab("self-reported/survey distance (km)") + theme_light() + geom_abline(slope=1, intercept = 0)
 
 
 
