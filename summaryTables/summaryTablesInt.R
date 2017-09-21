@@ -7,6 +7,9 @@ library(tidyr)
 library(data.table)
 library(xtable)
 
+#denominator accounts for the final units to be presented and for the number of years considered
+denominator = 2 * 1000
+
 #
 #international trips made by residents#####################
 #
@@ -35,11 +38,12 @@ trips$purpose[trips$purpose == 1] = "leisure"
 trips$purpose[trips$purpose == 3] = "leisure"
 trips$purpose[trips$purpose == 2] = "visit"
 trips$purpose[trips$purpose == 4] = "business"
+trips$purpose[trips$purpose == 99] = "other"
 
 
 #clean modes
 choicesCode = c(0,1,2,3,4,5,6,7,8,9)
-choicesString = c("auto","air","rail","bus", 9,9,9,9,9,9)
+choicesString = c("auto","air","rail","other", "bus","auto","auto","air","other","other")
 
 for (i in 1:length(choicesCode)){
   trips$entryMode[trips$entryMode == choicesCode[i]] = choicesString[i]
@@ -53,6 +57,15 @@ trips$destination[trips$country!=11840] = "overseas"
 #summary summary tables
 trips %>% group_by(year) %>% summarize(trips = sum(weight))
 trips %>% group_by(destination) %>% summarize(trips = sum(weight))
+trips %>% group_by(entryMode) %>% summarize(trips = sum(weight))
+
+trips$pw = trips$weight*trips$partySize
+sum(trips$pw) / sum(trips$weight)
+
+
+trips$region = "rest Canada"
+trips$region[trips$origProv == 35] = "Ontario"
+
 
 #set up the output folder
 setwd("C:/projects/MTO Long distance travel/Notes/Reports/summaryTables/tables")
@@ -67,11 +80,48 @@ print.xtable(texTable,
              include.rownames = FALSE)
 
 
+
+#by purpose and mode########
+table = trips %>%
+  group_by(region,destination,purpose, entryMode) %>%
+  summarize(trips = sum(weight)/denominator) %>%
+  tidyr::spread(entryMode, trips) 
+
+table[is.na(table)]=0
+table$total = table$auto + table$air + table$bus + table$rail + table$other
+
+texTable = xtable(table,
+                  digits = 0,
+                  caption = "Annual trips of residents (in thousands) by purpose and mode (average of period 2011-2012)")
+print.xtable(texTable, 
+             file = "intByPurposeAndMode.tex", 
+             hline.after = c(-1,0,4,8,12,nrow(table)),
+             include.rownames = FALSE, 
+             table.placement = "h")
+
+#by purpose and quarter########
+table = trips %>%
+  group_by(region,destination,purpose, quarter) %>%
+  summarize(trips = sum(weight)/denominator) %>%
+  tidyr::spread(quarter, trips) 
+
+table[is.na(table)]=0
+table$total = table$'1' + table$'2' + table$'3' + table$'4'
+
+texTable = xtable(table,
+                  digits = 0,
+                  caption = "Annual trips of residents (in thousands) by purpose and quarter (average of period 2011-2012)")
+print.xtable(texTable, 
+             file = "intByPurposeAndQuarter.tex", 
+             hline.after = c(-1,0,4,8,12,nrow(table)),
+             include.rownames = FALSE, 
+             table.placement = "h")
+
+
 #by o province by purpose########
 table = trips %>%
-  filter(purpose != 99, entryMode != 9) %>%
   group_by(purpose, destination, origProv) %>%
-  summarize(trips = sum(weight)/4000) %>%
+  summarize(trips = sum(weight)/denominator) %>%
   tidyr::spread(destination, trips) 
 
 table[is.na(table)]=0
@@ -79,18 +129,17 @@ table$total = table$overseas + table$US
 
 texTable = xtable(table,
                   digits = 0,
-                  caption = "Annual trips of residents (in thousands) by origin privince, by purpose (average of period 2011-2012)")
+                  caption = "Annual trips of residents (in thousands) by origin province, by purpose (average of period 2011-2012)")
 print.xtable(texTable, 
              file = "intOByPurpose.tex", 
-             hline.after = c(-1,0,12,24,nrow(table)),
+             hline.after = c(-1,0,12,24,34,nrow(table)),
              include.rownames = FALSE, 
              table.placement = "h")
 
 #by o province by mode##############
 table = trips %>%
-  filter(purpose != 99, entryMode != 9) %>%
   group_by(destination, entryMode, origProv) %>%
-  summarize(trips = sum(weight)/4000) %>%
+  summarize(trips = sum(weight)/denominator) %>%
   tidyr::spread(destination, trips)
 
 table[is.na(table)]=0
@@ -99,7 +148,7 @@ table$total = table$overseas + table$US
 texTable = xtable(table,
                   digits = 0,
                   format.args=list(big.mark=","),
-                  caption = "Annual trips of residents (in thousands) by origin privince, by mode (average of period 2011-2012)")
+                  caption = "Annual trips of residents (in thousands) by origin province, by mode (average of period 2011-2012)")
 print.xtable(texTable,
              file = "intOByMode.tex",
              hline.after = c(-1,0,12,24,34,nrow(table)),
@@ -109,9 +158,8 @@ print.xtable(texTable,
 
 #by origin province by by quarter
 table = trips %>%
-  filter(purpose != 99, entryMode != 9) %>%
   group_by(quarter,origProv,destination) %>%
-  summarize(trips = sum(weight)/4000) %>%
+  summarize(trips = sum(weight)/denominator) %>%
   tidyr::spread(destination, trips)
 
 
@@ -138,11 +186,11 @@ print.xtable(texTable,
 setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/visitors/input")
 
 visitorsTrips = fread("itsDataVis1112CombinedFromUS.csv")
-visitorsTrips = visitorsTrips %>% select(year, date, state, entryMode, purpose, fileType, destPR, weight)
+visitorsTrips = visitorsTrips %>% select(year, date, state, entryMode, purpose, fileType, destPR, weight, travelParty )
 
 overseasVisitorsTrips = fread("itsFromOS.csv")
 overseasVisitorsTrips$entryMode = 1
-overseasVisitorsTrips = overseasVisitorsTrips %>% select(year, date, state, entryMode, purpose, fileType, destPR,weight)
+overseasVisitorsTrips = overseasVisitorsTrips %>% select(year, date, state, entryMode, purpose, fileType, destPR,weight, travelParty)
 
 visitorsTrips = merge(visitorsTrips, overseasVisitorsTrips, all = TRUE)
 
@@ -160,10 +208,11 @@ visitorsTrips$purpose[visitorsTrips$purpose == 1] = "leisure"
 visitorsTrips$purpose[visitorsTrips$purpose == 3] = "leisure"
 visitorsTrips$purpose[visitorsTrips$purpose == 2] = "visit"
 visitorsTrips$purpose[visitorsTrips$purpose == 4] = "business"
+visitorsTrips$purpose[visitorsTrips$purpose == 99] = "other"
 
 #clean modes
 choicesCode = c(0,1,2,3,4,5,6,7,8,9)
-choicesString = c("auto","air","rail","bus", 9,9,9,9,9,9)
+choicesString = c("auto","air","rail","other", "bus","auto","auto","air","other","other")
 
 for (i in 1:length(choicesCode)){
   visitorsTrips$entryMode[visitorsTrips$entryMode == choicesCode[i]] = choicesString[i]
@@ -172,15 +221,58 @@ for (i in 1:length(choicesCode)){
 visitorsTrips$origin = "US"
 visitorsTrips$origin[visitorsTrips$fileType == "OS"] = "overseas"
 
+visitorsTrips$pw = visitorsTrips$travelParty * visitorsTrips$weight
+sum(visitorsTrips$pw) / sum(visitorsTrips$weight)
+
+visitorsTrips$region = "to rest Canada"
+visitorsTrips$region[visitorsTrips$destPR == 35] = "to Ontario"
+
 
 #set up the output folder
 setwd("C:/projects/MTO Long distance travel/Notes/Reports/summaryTables/tables")
 
+
+#by purpose and mode########
+table = visitorsTrips %>%
+  group_by(region, origin,purpose, entryMode) %>%
+  summarize(trips = sum(weight)/denominator) %>%
+  tidyr::spread(entryMode, trips) 
+
+table[is.na(table)]=0
+table$total = table$auto + table$air + table$bus + table$rail + table$other
+
+texTable = xtable(table,
+                  digits = 0,
+                  caption = "Annual trips of visitors (in thousands) by purpose and mode (average of period 2011-2012)")
+print.xtable(texTable, 
+             file = "visByPurposeAndMode.tex", 
+             hline.after = c(-1,0,4,8,12,nrow(table)),
+             include.rownames = FALSE, 
+             table.placement = "h")
+
+#by purpose and quarter########
+table = visitorsTrips %>%
+  group_by(region,origin,purpose, quarter) %>%
+  summarize(trips = sum(weight)/denominator) %>%
+  tidyr::spread(quarter, trips) 
+
+table[is.na(table)]=0
+table$total = table$'1' + table$'2' + table$'3' + table$'4'
+
+texTable = xtable(table,
+                  digits = 0,
+                  caption = "Annual trips of visitors (in thousands) by purpose and quarter (average of period 2011-2012)")
+print.xtable(texTable, 
+             file = "visByPurposeAndQuarter.tex", 
+             hline.after = c(-1,0,4,9,12,nrow(table)),
+             include.rownames = FALSE, 
+             table.placement = "h")
+
+
 #by o province by purpose########
 table = visitorsTrips %>%
-  filter(purpose != 99, entryMode != 9, destPR !=0) %>%
   group_by(purpose, origin, destPR) %>%
-  summarize(trips = sum(weight)/4000) %>%
+  summarize(trips = sum(weight)/denominator) %>%
   tidyr::spread(origin, trips) 
 
 table[is.na(table)]=0
@@ -188,18 +280,17 @@ table$total = table$overseas + table$US
 
 texTable = xtable(table,
                   digits = 0,
-                  caption = "Annual trips of visitors (in thousands) by destination privince, by purpose (average of period 2011-2012)")
+                  caption = "Annual trips of visitors (in thousands) by destination province, by purpose (average of period 2011-2012)")
 print.xtable(texTable, 
              file = "visDByPurpose.tex", 
-             hline.after = c(-1,0,11,23,nrow(table)),
+             hline.after = c(-1,0,12,25,35,nrow(table)),
              include.rownames = FALSE, 
              table.placement = "h")
 
 #by o province by mode##############
 table = visitorsTrips %>%
-  filter(purpose != 99, entryMode != 9, destPR !=0) %>%
   group_by(origin, entryMode, destPR) %>%
-  summarize(trips = sum(weight)/4000) %>%
+  summarize(trips = sum(weight)/denominator) %>%
   tidyr::spread(origin, trips)
 
 table[is.na(table)]=0
@@ -208,19 +299,19 @@ table$total = table$overseas + table$US
 texTable = xtable(table,
                   digits = 0,
                   format.args=list(big.mark=","),
-                  caption = "Annual trips of visitors (in thousands) by destination privince, by mode (average of period 2011-2012)")
+                  caption = "Annual trips of visitors (in thousands) by destination province, by mode (average of period 2011-2012)")
 print.xtable(texTable,
              file = "visDByMode.tex",
-             hline.after = c(-1,0,12,20,29,nrow(table)),
+             hline.after = c(-1,0,12,24,34,nrow(table)),
              include.rownames = FALSE, 
              table.placement = "h")
 
 
 #by origin province by by quarter
 table = visitorsTrips %>%
-  filter(purpose != 99, entryMode != 9, destPR !=0) %>%
+  filter(destPR !=0) %>%
   group_by(quarter,destPR,origin) %>%
-  summarize(trips = sum(weight)/4000) %>%
+  summarize(trips = sum(weight)/denominator) %>%
   tidyr::spread(origin, trips)
 
 
@@ -234,7 +325,7 @@ texTable = xtable(table,
 
 print.xtable(texTable,
              file = "visDByQuarter.tex",
-             hline.after = c(-1,0,11,22,34,nrow(table)),
+             hline.after = c(-1,0,11,24,34,nrow(table)),
              include.rownames = FALSE, 
              table.placement = "h")
 
