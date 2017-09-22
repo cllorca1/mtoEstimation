@@ -361,14 +361,29 @@ longData$logsum = log(exp(longData$logsumAuto) + exp(longData$logsumAir) + exp(l
 longData$dtLogsum = (1-longData$overnight)*longData$logsum
 longData$onLogsum = longData$overnight*longData$logsum
 
-if (purp=="Leisure") f2 = formula(choice ~ log_civic + intrametro + intrarural + intermetro + dtLogsum + onLogsum +
+if (purp=="Leisure") {
+  f2 = formula(choice ~ log_civic + intrametro + intrarural + intermetro + dtLogsum + onLogsum +
               log_hotel + log_sightseeing + log_outdoors + log_skiing + niagara + log_td  | 0 |0)
+  
+  f3 = formula(choice ~ log_civic + intrametro + intrarural + intermetro + dtLogsum + onLogsum +
+                  + log_td  | 0 |0)
+}
 
-if (purp=="Business") f2 = formula(choice ~ log_civic + intrarural + intermetro + dtLogsum + onLogsum + 
+
+if (purp=="Business") {
+  f2 = formula(choice ~ log_civic + intrarural + intermetro + dtLogsum + onLogsum + 
                                     log_hotel + log_sightseeing | 0 |0)
+  f3 = formula(choice ~ log_civic + intrarural + intermetro + dtLogsum + onLogsum | 0 |0)
+  
 
-if (purp=="Visit") f2 = formula(choice ~ log_civic + intrametro + intrarural + dtLogsum + onLogsum + 
+}
+if (purp=="Visit") {
+  f2 = formula(choice ~ log_civic + intrametro + intrarural + dtLogsum + onLogsum + 
                                  log_hotel + log_sightseeing  + log_td| 0 |0)
+  
+  f3 = formula(choice ~ log_civic + intrametro + intrarural + dtLogsum + onLogsum + log_td| 0 |0)
+
+}
 
 dcModel2 = mnlogit(data = longData, formula = f2 , choiceVar = "alt", weights = weights,  ncores=16, print.level = 2)
 summary(dcModel2)
@@ -378,6 +393,13 @@ fileName = paste("output/dcModelLogsum",purp,".csv",sep="")
 write.csv(x=summary(dcModel2)$CoefTable, file = fileName)
 write.table(x="", file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
 write.table(x=dcModel2$logLik[1], file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
+
+
+dcModel3 = mnlogit(data = longData, formula = f3 , choiceVar = "alt", weights = weights,  ncores=16, print.level = 2)
+fileName = paste("output/dcModelLogsumNo4Sq",purp,".csv",sep="")
+write.csv(x=summary(dcModel3)$CoefTable, file = fileName)
+write.table(x="", file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
+write.table(x=dcModel3$logLik[1], file = fileName, append = TRUE, col.names = FALSE,  row.names = FALSE)
 
 }
 

@@ -29,6 +29,9 @@ dataTripsEst %>% group_by(isUS, dayTrip) %>% summarise(count = sum(weight))
 
 dataTripsEst = subset(dataTripsEst, overnight)
 
-formula = isUS ~ 1| accUS
+
+formula = isUS ~ -1|0+accUS
+
+
 model0 <- mlogit(formula, mlogit.data(dataTripsEst, "isUS", shape = "wide"), weights = weight, print.level = 2)
 summary(model0)

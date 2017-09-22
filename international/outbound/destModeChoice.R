@@ -40,7 +40,7 @@ dataTripsToUS$destZone = 0
 oldCodes = seq(0, 9, by=1)
 choices = c(1,2,5,9,4,1,1,2,9,9)
 choicesString = c("auto","air","rail",9,"bus","auto","auto","air",9,9)
-choicesCode = c("0","1","2","9","3","0","0","1","9","9")
+choicesCode =   c("0"   ,"1"  ,"2"  ,"9","3" ,"0"   ,"0"   ,"1","9","9")
 dataTripsToUS$modeChoice = 0
 dataTripsToUS$modeChoiceString = 0
 for (i in 1:nrow(dataTripsToUS)){

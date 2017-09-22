@@ -22,7 +22,7 @@ includeExtCan = FALSE
 
 setwd("C:/models/mto/output")
 
-tripData <- fread("trips.csv")
+tripData <- read.csv("trips.csv", quote = "")
 
 tripData$tripMode[tripData$tripMode==0] = "auto"
 tripData$tripMode[tripData$tripMode==1] = "air"
@@ -31,20 +31,13 @@ tripData$tripMode[tripData$tripMode==3] = "bus"
 
 tripData$originDistrict = 0
 tripData$destinationDistrict = 0
-
 for (i in id){
   tripData$originDistrict[tripData$tripOriginCombinedZone==i] = as.character(district[i])
   tripData$destinationDistrict[tripData$tripDestCombinedZone==i] = as.character(district[i])
-
-  # tripData = tripData %>%
-  #   dplyr::mutate(originDistrict = ifelse(tripOriginCombinedZone == i, as.character(district[i]), originDistrict)) %>%
-  #   dplyr::mutate(originDistrict = ifelse(tripDestCombinedZone == i, as.character(district[i]), originDistrict))
-
 }
 
 tripData$weight = 1
 tripData$weight[tripData$tripState == "inout"] = 0.5
-tripData$weight[tripData$tripState == "away"] = 0
 
 
 #plot tt distribution
@@ -52,7 +45,7 @@ domesticTripsFromToOntario = subset(tripData, (tripOriginType == "ONTARIO" | des
 
 
 modelTrips = domesticTripsFromToOntario %>% filter(international == "false", tripState!="away") %>%
-  select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, daytrip = tripState ) %>%
+  select(purp = tripPurpose, dist = travelDistanceLvl2, distD = travelDistanceLvl1, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, daytrip = tripState ) %>%
   filter(mode != 0)
 modelTrips$source = "model"
 modelTrips$daytrip = as.character(modelTrips$daytrip)
@@ -63,7 +56,7 @@ modelTrips$daytrip[modelTrips$daytrip=="daytrip"] = 1
 #if all zones in the comparison
 if (includeExtCan) {
 modelTrips = tripData %>% filter(international == "false", tripState!="away") %>%
-  select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, daytrip = tripState ) %>%
+  select(purp = tripPurpose, dist = travelDistanceLvl2,distD = travelDistanceLvl1, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, daytrip = tripState ) %>%
   filter(mode != 0)
 modelTrips$source = "model"
 modelTrips$daytrip = as.character(modelTrips$daytrip)
@@ -114,7 +107,7 @@ wideData$nights = wideData$triptype
 # setwd("C:/projects/MTO Long distance travel/Choice models/02 destinationChoice/itsDataAnalysis/canadian")
 # wideDataITS = subset(fread(file="processed/longData2.csv", header = T, sep = ','), choice == TRUE)
 
-domesticTripsFromToOntarioTSRC = subset(wideData, lvl2_orig < 70 | lvl2_dest < 70 )
+domesticTripsFromToOntarioTSRC = subset(wideData, lvl2_orig < 69 | lvl2_dest < 69 )
 # internationalTripsFromToOntarioTSRC = subset(wideData, lvl2_orig < 61 | lvl2_dest < 61 )
 
 #get all the trips 
@@ -129,17 +122,20 @@ surveyTrips$weight = surveyTrips$weight/365/4
 #get all the trips // all Canada //with J.J data
 if (includeExtCan) {
 surveyTrips = wideData %>% 
-  select(purp = purpose, dist = dist2, weight = weightT, mode = modeChoice, origin = originDistrict, destination = destinationDistrict, daytrip = nights) %>%
+  select(purp = purpose, dist = dist2, distD=dist2, weight = weightT, mode = modeChoice, origin = originDistrict, destination = destinationDistrict, daytrip = nights) %>%
   filter(mode != 0)
 surveyTrips$source = "survey"
 surveyTrips$daytrip[surveyTrips$daytrip>0]= 1
 surveyTrips$daytrip= 1 - surveyTrips$daytrip
 surveyTrips$weight = surveyTrips$weight/365/4
 surveyTrips$purp[surveyTrips$purp=="other"]= "leisure"
-
 }
+surveyTrips$distD = surveyTrips$dist
+
 
 ###Join trips and analyze for calibration-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 
 allTrips = rbind(modelTrips, surveyTrips)
 
@@ -153,19 +149,32 @@ allTrips$mode[allTrips$mode=="rail"] = "3:rail"
 
 #DISTANCES
 
-ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 50, size = 1.2) + xlim(40,2000) +
+ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 50, size = .8) + xlim(0,2000) +
+  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
+
+ggplot(allTrips, aes(x=distD, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 50, size = .8) + xlim(0,2000) +
   facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
 
 
-ggplot(allTrips, aes(x=dist, weight=weight, color = as.factor(source))) + stat_ecdf(size = 1.2) + scale_x_log10() +
-  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("cummulative frequency") + theme_light() + labs(color = "source")
+ggplot(allTrips, aes(x=distD, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 50, size = .8) + xlim(40,500) +
+  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
+
+
+ggplot(allTrips, aes(x=distD, weight=weight,color = as.factor(source))) + stat_ecdf()  + scale_x_log10()+
+  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
+
+
+ggplot(allTrips, aes(x=dist, weight=weight, color = as.factor(source))) + stat_ecdf(size = 1.2) + xlim(0,2000) +
+  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
+
+ggplot(allTrips, aes(x=distD, weight=weight, color = as.factor(source))) + stat_ecdf(size = 1.2) + xlim(0,2000) +
+  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
 
 #get average trip distances
 
-distanceTable = allTrips %>% filter(dist < 2000) %>% group_by(source, purp) %>% summarize(sumW = sum(weight), sumWD = sum(weight*dist))
+distanceTable = allTrips %>% filter(dist < 2000) %>% group_by(source, purp) %>% summarize(sumW = sum(weight), sumWD = sum(weight*dist),sumWDD = sum(weight*distD))
 distanceTable$avgD = distanceTable$sumWD / distanceTable$sumW
-
-print(distanceTable %>% select(source, purp, avgD) %>% tidyr::spread(source, avgD))
+distanceTable$avgDD = distanceTable$sumWDD / distanceTable$sumW
 
 #MODAL SHARES
 
@@ -176,37 +185,12 @@ ggplot(subset(allTrips,!(origin == "0_S_Ontario" | origin =="1_N_Ontario"))) + g
   xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
 
 
-modeShareOntario = allTrips %>%
-  filter((origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>%
-  group_by(source, purp,mode) %>%
-  summarize(sumW = sum(weight)) %>% 
-  tidyr::spread(mode, sumW)
+modeShare = allTrips %>% filter() %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
 
-modeShareOntario$Total = modeShareOntario$`0:auto` + modeShareOntario$`1:air` + modeShareOntario$`2:bus` +modeShareOntario$`3:rail`
-modeShareOntario$`0:auto` = modeShareOntario$`0:auto`/modeShareOntario$Total
-modeShareOntario$`1:air` = modeShareOntario$`1:air`/modeShareOntario$Total
-modeShareOntario$`2:bus` = modeShareOntario$`2:bus`/modeShareOntario$Total
-modeShareOntario$`3:rail` = modeShareOntario$`3:rail` /modeShareOntario$Total
+modeShareOntario = allTrips %>% filter((origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
 
-print(modeShareOntario)
+modeShareCanada = allTrips %>% filter(!(origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
 
-
-modeShareOntario = allTrips %>%
-  filter(!(origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>%
-  group_by(source, purp,mode) %>%
-  summarize(sumW = sum(weight)) %>% 
-  tidyr::spread(mode, sumW)
-
-modeShareOntario$Total = modeShareOntario$`0:auto` + modeShareOntario$`1:air` + modeShareOntario$`2:bus` +modeShareOntario$`3:rail`
-modeShareOntario$`0:auto` = modeShareOntario$`0:auto`/modeShareOntario$Total
-modeShareOntario$`1:air` = modeShareOntario$`1:air`/modeShareOntario$Total
-modeShareOntario$`2:bus` = modeShareOntario$`2:bus`/modeShareOntario$Total
-modeShareOntario$`3:rail` = modeShareOntario$`3:rail` /modeShareOntario$Total
-
-
-#modeShareCanada = allTrips %>% filter(!(origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
-
-print(modeShareOntario)
 
 
 #comparison between self reported and network distance----------------------------------------------------------------------------------------------------------------------------------------
@@ -215,13 +199,6 @@ print(modeShareOntario)
 #  ylab("self-reported/survey distance (km)") + theme_light() + geom_abline(slope=1, intercept = 0)
 
 
-
-
-#comparison between self reported and network distance----------------------------------------------------------------------------------------------------------------------------------------
-
-ggplot(subset(wideData, modeChoice != "0"), aes(x=td, y=dist2, color=modeChoice)) +
-  geom_point(size = 1, alpha = 0.2) + ylim(0,5000) + xlim(0,5000) + xlab("network distance (km)") +
-  ylab("self-reported/survey distance (km)") + theme_light() + geom_abline(slope=1, intercept = 0)
 
 
 
