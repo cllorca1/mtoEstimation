@@ -136,11 +136,9 @@ surveyTrips$daytrip[surveyTrips$daytrip>0]= 1
 surveyTrips$daytrip= 1 - surveyTrips$daytrip
 surveyTrips$weight = surveyTrips$weight/365/4
 surveyTrips$purp[surveyTrips$purp=="other"]= "leisure"
-<<<<<<< HEAD
-}
-=======
 
->>>>>>> master
+}
+
 ###Join trips and analyze for calibration-------------------------------------------------------------------------------------------------------------------------------------------------------
 
 allTrips = rbind(modelTrips, surveyTrips)

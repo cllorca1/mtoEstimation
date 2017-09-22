@@ -57,7 +57,7 @@ wideData = rbind(wideData, wideData2)
 if (outbound) {
   wideData = subset(wideData, origProv ==35) #outbound
   wideData$destPlace = wideData$destZone
-<<<<<<< HEAD
+
   wideData$origPlace = wideData$combinedZone
   #asign district - for outbound
   wideData$originDistrict = "0"
@@ -66,15 +66,7 @@ if (outbound) {
   #   wideData$originDistrict[wideData$combinedZone==i] = as.character(district[i])
   #   wideData$destinationDistrict[wideData$destZone==i] = as.character(district[i])
   # }
-=======
-  #asign district - for outbound
-  wideData$originDistrict = "0"
-  wideData$destinationDistrict = "0"
-    for (i in id){
-    wideData$originDistrict[wideData$combinedZone==i] = as.character(district[i])
-    wideData$destinationDistrict[wideData$destZone==i] = as.character(district[i])
-  }
->>>>>>> master
+
   
 } else {
   wideData = subset(wideData, destPR ==35) #inbound
