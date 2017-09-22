@@ -182,4 +182,12 @@ print.xtable(texTable,
              table.placement = "h")
 
 
+ggplot(domesticTrips, aes(x=dist2)) + geom_histogram(binwidth = 10) + xlim(0,1000) + theme_light() +
+  xlab(label = "distance (km)") + 
+  ylab(label = "count (trips)")
+
+ggplot(domesticTrips, aes(x=dist2)) + stat_ecdf() + xlim(0,1000) + theme_light() +
+  xlab(label = "distance (km)") + 
+  ylab(label = "frequency")
+
 
