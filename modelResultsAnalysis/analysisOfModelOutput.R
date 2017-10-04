@@ -112,3 +112,19 @@ library(ggplot2)
 
 ggplot(tripsByModeAndOD, aes(x=autoShare, y=airShare))+geom_point(size = n)
 
+
+
+#filter model trip and write an output table for only ontario To Ontario trips
+
+library(dplyr)
+ontarioTrips = tripData %>% filter(tripOriginType == "ONTARIO", destZoneType == "ONTARIO") %>% 
+  select(tripId, personId, purpose = tripPurpose, type = tripState, originZone = tripOriginZone, 
+         originSuperzone = tripOriginCombinedZone, destinationZone = destZone, destinationSuperZone = tripDestCombinedZone,
+         mode = tripMode, hhAdultsTravelParty, hhKidsTravelParty, nonHhTravelParty, autoDistance = travelDistanceLvl1)
+
+summary(ontarioTrips)
+
+
+setwd("C:/projects/MTO Long distance travel/Choice models/10 trip analyzer")
+
+write.csv(file="ontarioTrips.csv", x = ontarioTrips, row.names = FALSE)
