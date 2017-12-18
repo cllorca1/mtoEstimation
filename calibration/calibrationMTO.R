@@ -156,9 +156,14 @@ allTrips$mode[allTrips$mode=="rail"] = "3:rail"
 ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 50, size = 1.2) + xlim(40,2000) +
   facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
 
+ggsave(file="C://projects/MTO Long distance travel/publications/tripDistDist.wmf",
+       width = 25 , height = 17, units = "cm",dpi = 1000, device = "wmf")
+
 
 ggplot(allTrips, aes(x=dist, weight=weight, color = as.factor(source))) + stat_ecdf(size = 1.2) + scale_x_log10() +
   facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("cummulative frequency") + theme_light() + labs(color = "source")
+
+
 
 #get average trip distances
 
@@ -169,44 +174,56 @@ print(distanceTable %>% select(source, purp, avgD) %>% tidyr::spread(source, avg
 
 #MODAL SHARES
 
+#ontario
+
 ggplot(subset(allTrips,origin == "0_S_Ontario" | origin =="1_N_Ontario")) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(. ~ purp) + 
   xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
+
+ggsave(file="C://projects/MTO Long distance travel/publications/modalShare.wmf",
+       width = 25 , height = 17, units = "cm",dpi = 1000, device = "wmf")
+
+#non-ontario
 
 ggplot(subset(allTrips,!(origin == "0_S_Ontario" | origin =="1_N_Ontario"))) + geom_bar(position = "fill", aes(x=as.factor(source), fill = as.factor(mode), weight = weight )) + facet_grid(. ~ purp) + 
   xlab("source") + ylab("share (%)") + theme_light() + labs(color = "mode")
 
+#ontario
 
-modeShareOntario = allTrips %>%
+
+modeShareTable = allTrips %>%
   filter((origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>%
   group_by(source, purp,mode) %>%
   summarize(sumW = sum(weight)) %>% 
   tidyr::spread(mode, sumW)
 
-modeShareOntario$Total = modeShareOntario$`0:auto` + modeShareOntario$`1:air` + modeShareOntario$`2:bus` +modeShareOntario$`3:rail`
-modeShareOntario$`0:auto` = modeShareOntario$`0:auto`/modeShareOntario$Total
-modeShareOntario$`1:air` = modeShareOntario$`1:air`/modeShareOntario$Total
-modeShareOntario$`2:bus` = modeShareOntario$`2:bus`/modeShareOntario$Total
-modeShareOntario$`3:rail` = modeShareOntario$`3:rail` /modeShareOntario$Total
+modeShareTable$Total = modeShareTable$`0:auto` + modeShareTable$`1:air` + modeShareTable$`2:bus` +modeShareTable$`3:rail`
+modeShareTable$`0:auto` = modeShareTable$`0:auto`/modeShareTable$Total
+modeShareTable$`1:air` = modeShareTable$`1:air`/modeShareTable$Total
+modeShareTable$`2:bus` = modeShareTable$`2:bus`/modeShareTable$Total
+modeShareTable$`3:rail` = modeShareTable$`3:rail` /modeShareTable$Total
 
-print(modeShareOntario)
+print(modeShareTable)
 
 
-modeShareOntario = allTrips %>%
+
+#non-ontario
+
+modeShareTable = allTrips %>%
   filter(!(origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>%
   group_by(source, purp,mode) %>%
   summarize(sumW = sum(weight)) %>% 
   tidyr::spread(mode, sumW)
 
-modeShareOntario$Total = modeShareOntario$`0:auto` + modeShareOntario$`1:air` + modeShareOntario$`2:bus` +modeShareOntario$`3:rail`
-modeShareOntario$`0:auto` = modeShareOntario$`0:auto`/modeShareOntario$Total
-modeShareOntario$`1:air` = modeShareOntario$`1:air`/modeShareOntario$Total
-modeShareOntario$`2:bus` = modeShareOntario$`2:bus`/modeShareOntario$Total
-modeShareOntario$`3:rail` = modeShareOntario$`3:rail` /modeShareOntario$Total
+modeShareTable$Total = modeShareTable$`0:auto` + modeShareTable$`1:air` + modeShareTable$`2:bus` +modeShareTable$`3:rail`
+modeShareTable$`0:auto` = modeShareTable$`0:auto`/modeShareTable$Total
+modeShareTable$`1:air` = modeShareTable$`1:air`/modeShareTable$Total
+modeShareTable$`2:bus` = modeShareTable$`2:bus`/modeShareTable$Total
+modeShareTable$`3:rail` = modeShareTable$`3:rail` /modeShareTable$Total
 
 
 #modeShareCanada = allTrips %>% filter(!(origin == "0_S_Ontario" | origin =="1_N_Ontario")) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
 
-print(modeShareOntario)
+print(modeShareTable)
 
 
 #comparison between self reported and network distance----------------------------------------------------------------------------------------------------------------------------------------
@@ -219,9 +236,9 @@ print(modeShareOntario)
 
 #comparison between self reported and network distance----------------------------------------------------------------------------------------------------------------------------------------
 
-ggplot(subset(wideData, modeChoice != "0"), aes(x=td, y=dist2, color=modeChoice)) +
-  geom_point(size = 1, alpha = 0.2) + ylim(0,5000) + xlim(0,5000) + xlab("network distance (km)") +
-  ylab("self-reported/survey distance (km)") + theme_light() + geom_abline(slope=1, intercept = 0)
+# ggplot(subset(wideData, modeChoice != "0"), aes(x=td, y=dist2, color=modeChoice)) +
+#   geom_point(size = 1, alpha = 0.2) + ylim(0,5000) + xlim(0,5000) + xlab("network distance (km)") +
+#   ylab("self-reported/survey distance (km)") + theme_light() + geom_abline(slope=1, intercept = 0)
 
 
 

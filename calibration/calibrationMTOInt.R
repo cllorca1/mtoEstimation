@@ -9,7 +9,7 @@ library(ggplot2)
 library(dplyr)
 library(data.table)
 
-outbound = FALSE
+# outbound = FALSE
 
 
 #read zone2 districts
@@ -62,32 +62,16 @@ if (outbound) {
   #asign district - for outbound
   wideData$originDistrict = "0"
   wideData$destinationDistrict = "0"
-  #   for (i in id){
-  #   wideData$originDistrict[wideData$combinedZone==i] = as.character(district[i])
-  #   wideData$destinationDistrict[wideData$destZone==i] = as.character(district[i])
-  # }
+    for (i in id){
+    wideData$originDistrict[wideData$combinedZone==i] = as.character(district[i])
+    wideData$destinationDistrict[wideData$destZone==i] = as.character(district[i])
+  }
 
   
 } else {
   wideData = subset(wideData, destPR ==35) #inbound
   wideData$destPlace = wideData$alt
-<<<<<<< HEAD
-  wideData$origPlace = wideData$combinedZone
-  #asign district - for inbound
-  wideData$originDistrict = "0"
-  wideData$destinationDistrict = "0"
-  # for (i in id){
-  #   wideData$originDistrict[wideData$combinedZone==i] = as.character(district[i])
-  #   wideData$destinationDistrict[wideData$alt==i] = as.character(district[i])
-  # }
-} 
 
-wideData = data.frame(wideData)
-
-#select relevant variables
-surveyTrips = wideData  %>%
-  select(purp = purpose, dist = td, weight = weight, mode = modeChoiceString, origin = originDistrict, destination = destinationDistrict, destPlace = destPlace, origPlace = origPlace ) %>% 
-=======
   #asign district - for inbound
   wideData$originDistrict = "0"
   wideData$destinationDistrict = "0"
@@ -95,13 +79,17 @@ surveyTrips = wideData  %>%
     wideData$originDistrict[wideData$combinedZone==i] = as.character(district[i])
     wideData$destinationDistrict[wideData$alt==i] = as.character(district[i])
   }
+  
+  #needs to clean dobled names
+  drops <- c("alt","combinedZone")
+  wideData[ , !(names(wideData) %in% drops)]
+  
 } 
 
 
 #select relevant variables
 surveyTrips = wideData  %>%
-  select(purp = purpose, dist = td, weight = weight, mode = modeChoiceString, origin = originDistrict, destination = destinationDistrict, destPlace = destPlace ) %>% 
->>>>>>> master
+  #select(purp = purpose, dist = td, weight = weight, mode = modeChoiceString, origin = originDistrict, destination = destinationDistrict, destPlace = destPlace ) %>% 
   filter(mode != "0")
 surveyTrips$mode = as.factor(as.character(surveyTrips$mode))
 surveyTrips$weight = surveyTrips$weight/365/2
@@ -140,39 +128,39 @@ tripData$weight[tripData$tripState == "away"] = 0
 # t = t %>%  group_by(tripPurpose, tripMode) %>% summarize (count = n(), sumW = sum(weight))
 # t
 
-if (outbound) {
-  #CANADIAN
-  outboundIntTrips = subset(tripData, tripOriginType == "ONTARIO" & destZoneType == "EXTUS")
-  modelTrips = outboundIntTrips  %>%
-    select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone, origPlace = tripOriginCombinedZone ) 
-    
-} else {
-  #VISITORS
-  inboundIntTrips = subset(tripData, tripOriginType == "EXTUS" & destZoneType == "ONTARIO")
-  modelTrips = inboundIntTrips  %>%
-    select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone, origPlace = tripOriginCombinedZone ) 
-    
-} 
+# if (outbound) {
+#   #CANADIAN
+#   outboundIntTrips = subset(tripData, tripOriginType == "ONTARIO" & destZoneType == "EXTUS")
+#   modelTrips = outboundIntTrips  %>%
+#     select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone, origPlace = tripOriginCombinedZone ) 
+#     
+# } else {
+#   #VISITORS
+#   inboundIntTrips = subset(tripData, tripOriginType == "EXTUS" & destZoneType == "ONTARIO")
+#   modelTrips = inboundIntTrips  %>%
+#     select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone, origPlace = tripOriginCombinedZone ) 
+#     
+# } 
 
 
-<<<<<<< HEAD
-=======
+# <<<<<<< HEAD
+# =======
 if (outbound) {
   #CANADIAN
   outboundIntTrips = subset(tripData, tripOriginType == "ONTARIO" & destZoneType == "EXTUS" & international == "true" & tripState != "away")
   modelTrips = outboundIntTrips  %>%
-    select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone ) %>% 
+    select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone ) %>%
     filter(mode != "0")
 } else {
   #VISITORS
   inboundIntTrips = subset(tripData, tripOriginType == "EXTUS" & destZoneType == "ONTARIO" & international == "true" & tripState != "away")
   modelTrips = inboundIntTrips  %>%
-    select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone ) %>% 
+    select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, destPlace = tripDestCombinedZone ) %>%
     filter(mode != "0")
-} 
-
-
->>>>>>> master
+}
+# 
+# 
+# >>>>>>> master
 
 
 #join and plot results
@@ -188,19 +176,19 @@ allTrips = allTrips %>%
   mutate(mode = ifelse(mode=="3bus", "2bus",mode))
 
 
-<<<<<<< HEAD
-#finish data collection
-
-print(
-ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 150, size = 1.2) + xlim(40,4000) +
-=======
-ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 150, size = 1.2) + xlim(40,4000) +
-  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
-
-ggplot(allTrips, aes(x=dist, weight=weight,color = as.factor(source))) + stat_ecdf(size = 1.2) + xlim(0,4000) +
->>>>>>> master
-  facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
-)
+# <<<<<<< HEAD
+# #finish data collection
+# 
+# print(
+# ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 150, size = 1.2) + xlim(40,4000) +
+# =======
+# ggplot(allTrips, aes(x=dist, weight=weight, ..density..,color = as.factor(source))) + geom_freqpoly(binwidth = 150, size = 1.2) + xlim(40,4000) +
+#   facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
+# 
+# ggplot(allTrips, aes(x=dist, weight=weight,color = as.factor(source))) + stat_ecdf(size = 1.2) + xlim(0,4000) +
+# >>>>>>> master
+#   facet_grid(. ~ purp) + xlab("trip distance (km)") + ylab("frequency") + theme_light() + labs(color = "source")
+# )
 
 print(
 ggplot(allTrips, aes(x=dist, weight=weight,color = as.factor(source))) + stat_ecdf(size = 1.2) + scale_x_log10() +
@@ -217,33 +205,34 @@ ggplot(allTrips) + geom_bar(position = "fill", aes(x=as.factor(source), fill = a
 
 #aggregate by destination level in ITS survey
 
-<<<<<<< HEAD
-#summaryTable = allTrips %>% group_by(source, purp, destPlace) %>% summarize(count = sum(weight), dist = sum(dist*weight)/sum(weight))
-
-#setwd("C:/code/mtoEstimation/calibration")
-#write.csv(x=summaryTable, file = "table.csv")
-
-
-#summaryTable = allTrips %>% group_by(source, purp, origPlace) %>% summarize(count = sum(weight), dist = sum(dist*weight)/sum(weight))
-
-#setwd("C:/code/mtoEstimation/calibration")
-#write.csv(x=summaryTable, file = "table.csv")
-
-=======
+# <<<<<<< HEAD
+# #summaryTable = allTrips %>% group_by(source, purp, destPlace) %>% summarize(count = sum(weight), dist = sum(dist*weight)/sum(weight))
+# 
+# #setwd("C:/code/mtoEstimation/calibration")
+# #write.csv(x=summaryTable, file = "table.csv")
+# 
+# 
+# #summaryTable = allTrips %>% group_by(source, purp, origPlace) %>% summarize(count = sum(weight), dist = sum(dist*weight)/sum(weight))
+# 
+# #setwd("C:/code/mtoEstimation/calibration")
+# #write.csv(x=summaryTable, file = "table.csv")
+# 
+# =======
 summaryTable = allTrips %>% group_by(source, purp, destPlace) %>% summarize(count = sum(weight), dist = sum(dist*weight)/sum(weight))
 
-setwd("C:/code/mtoEstimation/calibration")
-write.csv(x=summaryTable, file = "table.csv")
+# setwd("C:/code/mtoEstimation/calibration")
+# write.csv(x=summaryTable, file = "table.csv")
 
 
->>>>>>> master
+
+# >>>>>>> master
 
 #get average travel distances
 
 distanceTable = allTrips %>% filter(dist < 4000) %>% group_by(source, purp) %>% summarize(sumW = sum(weight), sumWD = sum(weight*dist))
 distanceTable$avgD = distanceTable$sumWD / distanceTable$sumW
 
-<<<<<<< HEAD
+# <<<<<<< HEAD
 print(distanceTable %>% select(source, purp, avgD) %>% tidyr::spread(source, avgD))
 
 #get modal shares:
@@ -265,15 +254,13 @@ modeShareOntario$`3rail` = modeShareOntario$`3rail` /modeShareOntario$Total
 print(modeShareOntario)
 
 }
-=======
+
 
 #get modal shares:
 
-allTrips$mode[allTrips$mode=="air"] = "1:air"
-allTrips$mode[allTrips$mode=="auto"] = "0:auto"
-allTrips$mode[allTrips$mode=="bus"] = "2:bus"
-allTrips$mode[allTrips$mode=="rail"] = "3:rail"
-
-modeShare = allTrips %>% filter(dist < 4000) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
-
->>>>>>> master
+# allTrips$mode[allTrips$mode=="air"] = "1:air"
+# allTrips$mode[allTrips$mode=="auto"] = "0:auto"
+# allTrips$mode[allTrips$mode=="bus"] = "2:bus"
+# allTrips$mode[allTrips$mode=="rail"] = "3:rail"
+# 
+# modeShare = allTrips %>% filter(dist < 4000) %>% group_by(source, purp, mode) %>% summarize(sumW = sum(weight))
