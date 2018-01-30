@@ -128,3 +128,15 @@ summary(ontarioTrips)
 setwd("C:/projects/MTO Long distance travel/Choice models/10 trip analyzer")
 
 write.csv(file="ontarioTrips.csv", x = ontarioTrips, row.names = FALSE)
+
+
+#analyze departure time distributions
+
+library(ggplot2)
+library(data.table)
+library(dplyr)
+
+
+
+
+
