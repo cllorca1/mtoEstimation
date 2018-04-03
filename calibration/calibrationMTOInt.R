@@ -82,14 +82,14 @@ if (outbound) {
   
   #needs to clean dobled names
   drops <- c("alt","combinedZone")
-  wideData[ , !(names(wideData) %in% drops)]
+  wideData = subset(wideData, select=which(!duplicated(names(wideData))))
   
 } 
 
 
 #select relevant variables
 surveyTrips = wideData  %>%
-  #select(purp = purpose, dist = td, weight = weight, mode = modeChoiceString, origin = originDistrict, destination = destinationDistrict, destPlace = destPlace ) %>% 
+  select(purp = purpose, dist = td, weight = weight, mode = modeChoiceString, origin = originDistrict, destination = destinationDistrict, destPlace = destPlace ) %>% 
   filter(mode != "0")
 surveyTrips$mode = as.factor(as.character(surveyTrips$mode))
 surveyTrips$weight = surveyTrips$weight/365/2
