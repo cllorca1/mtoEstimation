@@ -148,6 +148,19 @@ summary(model6Visit)
 write.table(summary(model6Visit)$CoefTable, "C:/Git/mLogit/models/Visit6.txt", sep="\t")
 
 
+#NEW model without accessibility! 24.5.2018------------------------------------
+
+model7Visit<- mlogit(choiceVisit~ 1|  Young+Female+adultsInHousehold+kidsInHousehold+
+                       +income2+income3+income4, 
+                     weights=weightVisit,data=dataVisit, print.level = 1)
+
+summary(model7Visit)
+folder= "C:/projects/MTO Long distance travel/Choice models/01 tripGeneration/domesticUpdate2018"
+
+write.table(summary(model7Visit)$CoefTable, paste(folder, "VisitNew.txt", sep = "/"), sep="\t")
+
+
+
 #BUSINESS trip purpose------------------------------------
 
 
@@ -218,6 +231,19 @@ summary(model6Business)
 write.table(summary(model6Business)$CoefTable, "C:/Git/mLogit/models/Buisness6.txt", sep="\t")
 
 
+#NEW model without accessibility! 24.5.2018------------------------------------
+
+model7Business<- mlogit(choiceBusiness ~ 1|  Female+Employed  + income4, 
+                        weights=weightBusiness,data=dataBusiness, print.level = 1)
+                     
+summary(model7Business)
+folder= "C:/projects/MTO Long distance travel/Choice models/01 tripGeneration/domesticUpdate2018"
+
+write.table(summary(model7Business)$CoefTable, paste(folder, "BusinessNew.txt", sep = "/"), sep="\t")
+
+
+
+
 #LEISURE trip purpose------------------------------------
 
 
@@ -283,6 +309,18 @@ model6Leisure<-mlogit(choiceLeisure~1 | adultsInHousehold+
                       ,weights=weightLeisure,data=dataLeisure, print.level = 1)
 summary(model6Leisure)
 write.table(summary(model6Leisure)$CoefTable, "C:/Git/mLogit/models/Leisure6.txt", sep="\t")
+
+
+#NEW model without accessibility! 24.5.2018------------------------------------
+
+model7Leisure<- mlogit(choiceLeisure~1 | adultsInHousehold+
+                         income2+income3+income4
+                       ,weights=weightLeisure,data=dataLeisure, print.level = 1)
+
+summary(model7Leisure)
+folder= "C:/projects/MTO Long distance travel/Choice models/01 tripGeneration/domesticUpdate2018"
+
+write.table(summary(model7Leisure)$CoefTable, paste(folder, "LeisureNew.txt", sep = "/"), sep="\t")
 
 
 #Store loglik data---------------------------------------------------------
