@@ -13,6 +13,8 @@ travelTimeDf = read.csv("hsrMatrix.csv")
 #hsrMatrix = as.matrix(travelTimeDf[2:7]) #this is for the mto proposed tts
 #sameByscenario
 
+
+#contains access and egress times
 hsrMatrix200 = as.matrix(read.csv("hsrMatrix200.csv")[2:7]) 
 hsrMatrix300 = as.matrix(read.csv("hsrMatrix300.csv")[2:7]) 
 hsrMatrix400 = as.matrix(read.csv("hsrMatrix400.csv")[2:7]) 
@@ -100,9 +102,9 @@ for (o in 1:n_zones){
     if (is.na(tt0[o,d])){
       #currently no connection by train
     } else {
-      #currently one can travel by train
-      lowerTime300 = tt0[o,d]
-      lowerTime400 = tt0[o,d]
+      #currently one can travel by train, assume maximum as double of train travel time
+      lowerTime300 = 2 * tt0[o,d]
+      lowerTime400 = 2 * tt0[o,d]
       #percentage of the trip using hsr
       percent300=0
       percent400=0
