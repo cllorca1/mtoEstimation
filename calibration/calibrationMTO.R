@@ -48,10 +48,10 @@ tripData$weight[tripData$tripState == "away"] = 0
 
 
 #plot tt distribution
-domesticTripsFromToOntario = subset(tripData, (tripOriginType == "ONTARIO" | destZoneType == "ONTARIO") & international == "false")
+domesticTripsFromToOntario = subset(tripData, (tripOriginType == "ONTARIO" | destZoneType == "ONTARIO") & international == "FALSE")
 
 
-modelTrips = domesticTripsFromToOntario %>% filter(international == "false", tripState!="away") %>%
+modelTrips = domesticTripsFromToOntario %>% filter(international == "FALSE", tripState!="away") %>%
   select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, daytrip = tripState ) %>%
   filter(mode != 0)
 modelTrips$source = "model"
@@ -62,7 +62,7 @@ modelTrips$daytrip[modelTrips$daytrip=="daytrip"] = 1
 
 #if all zones in the comparison
 if (includeExtCan) {
-modelTrips = tripData %>% filter(international == "false", tripState!="away") %>%
+modelTrips = tripData %>% filter(international == "FALSE", tripState!="away") %>%
   select(purp = tripPurpose, dist = travelDistanceLvl2, weight = weight, mode = tripMode, origin = originDistrict, destination = destinationDistrict, daytrip = tripState ) %>%
   filter(mode != 0)
 modelTrips$source = "model"
