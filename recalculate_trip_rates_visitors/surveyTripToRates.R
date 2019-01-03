@@ -1,8 +1,9 @@
 pacman::p_load(data.table, dplyr, ggplot2)
 
-folderSurvey = "C:/models/mto/output/surveyData/"
+folderSurvey = "C:/projects/MTO Long distance travel/Choice models/01 tripGeneration/domesticUpdate2019/"
 
-fileSurveyTrips = "tsrcTrips2018.csv"
+
+fileSurveyTrips = "tsrcTrips2019.csv"
 fileNameTrips = paste(folderSurvey, fileSurveyTrips, sep = "")
 trips <- fread(fileNameTrips)
 
@@ -33,9 +34,11 @@ trips = merge(x=trips, y=zones, by = "join_id")
 trips = trips %>% rowwise() %>% 
   mutate(is_overnight = if_else(numberNights == 0, F, T))
 
-trips = trips %>% mutate(numberDaytrips = if_else(is_overnight, 0, weight))
-trips = trips %>% mutate(numberInOut = if_else(is_overnight, 2 * weight, 0))
-trips = trips %>% mutate(numberAway = if_else(is_overnight, weight * (numberNights - 1), 0 ))
+##(weights as trip weights WTEP)
+
+trips = trips %>% mutate(numberDaytrips = if_else(is_overnight, 0, weightWTEP))
+trips = trips %>% mutate(numberInOut = if_else(is_overnight, 2 * weightWTEP, 0))
+trips = trips %>% mutate(numberAway = if_else(is_overnight, weightWTEP * (numberNights - 1), 0 ))
 
 #convert trip purposes
 
