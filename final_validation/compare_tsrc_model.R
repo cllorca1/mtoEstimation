@@ -1,7 +1,7 @@
 pacman::p_load(data.table, dplyr, ggplot2)
 
 
-folder_surveys = "C:/models/mto/output/surveyData/"
+folder_surveys = "C:/projects/MTO Long distance travel/Choice models/01 tripGeneration/domesticUpdate2019/"
 
 tsrc_trips = fread(paste(folder_surveys, "tsrcTrips2019.csv", sep = ""))
 
@@ -42,6 +42,12 @@ tsrc_trips %>%
   summarize(w1 = sum(weightWTTP)/1000, w2 = sum(weightWTEP)/1000)
 
 
+#summarize to compare
+summary = tsrc_trips %>% group_by(origProvince == 35, destProvince == 35, mainMode) %>% summarise(sum(weightWTTP)/4)
+
+
+#MODEL
+
 folder_model = "C:/models/treso-ldpm/output/"
 
 model_trips = fread(paste(folder_model, "ldpm_trips.csv", sep = ""))
@@ -64,6 +70,10 @@ model_trips %>% filter(!international, tripOriginType == "EXTCANADA") %>%
 model_trips %>% filter(!international, tripState == "daytrip", tripOriginType == "EXTCANADA") %>% 
   summarize(sum(weight)*365/1000, sum(weight*(hhAdultsTravelParty))*365/1000)
 
+#print out summary table of everything
+summary = model_trips %>%
+  group_by(tripOriginType, destZoneType, tripState, tripMode) %>%
+  summarize(trips = n(), person_trips = sum(hhAdultsTravelParty))
 
 
 
