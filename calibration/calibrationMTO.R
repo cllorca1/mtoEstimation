@@ -16,13 +16,18 @@ districts = read.csv("processed/districtsCanada.csv")
 id = districts$id
 district = districts$type2
 
-includeExtCan = FALSE
+includeExtCan = TRUE
 
 #read model trips
 
-setwd("C:/models/mto/output")
+# setwd("C:/models/mto/output")
 
-tripData <- fread("trips.csv")
+setwd("C:/models/treso-ldpm/output")
+
+
+# tripData <- fread("trips.csv")
+
+tripData <- fread("ldpm_trips.csv")
 
 tripData$tripMode[tripData$tripMode==0] = "auto"
 tripData$tripMode[tripData$tripMode==1] = "air"

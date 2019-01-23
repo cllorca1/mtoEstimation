@@ -1,45 +1,30 @@
 pacman::p_load(data.table, dplyr, ggplot2)
 
+path_er = "C:/projects/MTO Long distance travel/Database information/Zones/economic_regions/economic_regions.csv"
+
+er = fread(path_er) 
+
+er = er %>% filter(treso_er != "EXT")
+
+
+er_by_cd = er %>% select(cduid, treso_er)
+er_by_cd = er_by_cd %>% distinct()
+
+
+#survey####################################################
 
 folder_surveys = "C:/projects/MTO Long distance travel/Choice models/01 tripGeneration/domesticUpdate2019/"
 
 tsrc_trips = fread(paste(folder_surveys, "tsrcTrips2019.csv", sep = ""))
 
-tsrc_trips$aux = tsrc_trips$weightWTTP / tsrc_trips$weightWTEP
+#link ER
+tsrc_trips = tsrc_trips %>%
+  rowwise() %>%
+  mutate(origCduid = origProvince * 100 + origCD)
 
-tsrc_trips %>%
-  group_by(refYear) %>%
-  summarize(w1 = sum(weightWTTP)/1000, w2 = sum(weightWTEP)/1000)
-
-tsrc_trips %>%
-  filter(numberNights == 0) %>% 
-  group_by(refYear) %>%
-  summarize(w1 = sum(weightWTTP)/1000, w2 = sum(weightWTEP)/1000)
-
-#Ontario
-tsrc_trips %>%
-  filter(origProvince == 35) %>% 
-  group_by(refYear) %>%
-  summarize(w1 = sum(weightWTTP)/1000, w2 = sum(weightWTEP)/1000)
-
-tsrc_trips %>%
-  filter(numberNights == 0) %>% 
-  filter(origProvince == 35) %>% 
-  group_by(refYear) %>%
-  summarize(w1 = sum(weightWTTP)/1000, w2 = sum(weightWTEP)/1000)
-
-#Extcanada
-
-tsrc_trips %>%
-  filter(origProvince != 35) %>% 
-  group_by(refYear) %>%
-  summarize(w1 = sum(weightWTTP)/1000, w2 = sum(weightWTEP)/1000)
-
-tsrc_trips %>%
-  filter(numberNights == 0) %>% 
-  filter(origProvince != 35) %>% 
-  group_by(refYear) %>%
-  summarize(w1 = sum(weightWTTP)/1000, w2 = sum(weightWTEP)/1000)
+tsrc_trips = tsrc_trips %>%
+  rowwise() %>%
+  mutate(destCduid = destProvince * 100 + destCD)
 
 
 #summarize to compare

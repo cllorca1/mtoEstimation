@@ -8,3 +8,5 @@ trips1 <- fread(fileName1)
 summary = trips1 %>% group_by(tripOriginType,destZoneType,tripState, tripMode) %>%
   summarize(trips = n(), person_trips = sum(hhKidsTravelParty + hhAdultsTravelParty))
 
+
+
