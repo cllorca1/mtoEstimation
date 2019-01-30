@@ -7,10 +7,17 @@ er = fread(path_er)
 er_ontario = er %>% filter(type == "ONTARIO")
 
 
-er_by_cd = er_ontario %>% select(cduid, treso_er)
+er_by_cd = er_ontario %>% select(cduid, cmauid, treso_er)
 er_by_cd = er_by_cd %>% distinct()
 
+#manually add two missing zones
+zone = c(cduid=3536, cmauid = 0, treso_er = "GGHx")
+er_by_cd=rbind(er_by_cd, zone)
 
+zone = c(cduid=3516, cmauid = 0, treso_er = "SWO")
+er_by_cd=rbind(er_by_cd, zone)
+
+rm(zone)
 #survey####################################################
 
 folder_surveys = "C:/projects/MTO Long distance travel/Choice models/01 tripGeneration/domesticUpdate2019/"
@@ -29,12 +36,12 @@ tsrc_trips = tsrc_trips %>%
   rowwise() %>%
   mutate(destCduid = destProvince * 100 + destCD)
 
-orig_er_aux = merge(tsrc_trips, er_by_cd, by.x = "origCduid", by.y = "cduid", all.x = T)
+orig_er_aux = merge(tsrc_trips, er_by_cd, by.x = c("origCduid","origCMA"), by.y = c("cduid","cmauid"), all.x = T)
 orig_er_aux = orig_er_aux %>% arrange(uid) #merge modifies the order of rows so we need to re-sort
 tsrc_trips$orig_er_on = orig_er_aux$treso_er
 rm(orig_er_aux)
 
-dest_er_aux = merge(tsrc_trips, er_by_cd, by.x = "destCduid", by.y = "cduid", all.x = T)
+dest_er_aux = merge(tsrc_trips, er_by_cd, by.x = c("destCduid","destCMA"), by.y = c("cduid","cmauid"), all.x = T)
 dest_er_aux = dest_er_aux %>% arrange(uid) #merge modifies the order of rows so we need to re-sort
 tsrc_trips$dest_er_on = dest_er_aux$treso_er
 rm(dest_er_aux)

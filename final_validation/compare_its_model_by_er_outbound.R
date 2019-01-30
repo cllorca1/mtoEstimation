@@ -22,14 +22,26 @@ path_er = "C:/projects/MTO Long distance travel/Database information/Zones/econo
 
 er_can = fread(path_er) 
 er_ontario = er_can %>% filter(type == "ONTARIO")
-er_by_cd_ontario = er_ontario %>% select(cduid, treso_er)
+er_by_cd_ontario = er_ontario %>% select(cduid, cmauid, treso_er)
 er_by_cd_ontario = er_by_cd_ontario %>% distinct()
+
+
+#manually add two missing zones
+zone = list(cduid=3536L, cmauid = 0L, treso_er = "GGHx")
+er_by_cd_ontario=rbind(er_by_cd_ontario, zone)
+
+zone = list(cduid=3516L, cmauid = 0L, treso_er = "SWO")
+er_by_cd_ontario=rbind(er_by_cd_ontario, zone)
+
+rm(zone)
 
 #add ids
 survey_trips$uid = seq(1:nrow(survey_trips))
 
+survey_trips$origCMA[survey_trips$origCMA == -999] = 0
+
 #link ER of Ontario
-orig_er_aux = merge(survey_trips, er_by_cd_ontario, by.x = "origCD", by.y = "cduid", all.x = T)
+orig_er_aux = merge(survey_trips, er_by_cd_ontario, by.x = c("origCD","origCMA"), by.y = c("cduid","cmauid"), all.x = T)
 orig_er_aux = orig_er_aux %>% arrange(uid) #merge modifies the order of rows so we need to re-sort
 survey_trips$orig_er_on = orig_er_aux$treso_er
 rm(orig_er_aux)
