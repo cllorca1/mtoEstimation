@@ -50,7 +50,7 @@ rm(orig_er_aux)
 
 survey_trips = survey_trips %>% rowwise() %>%
   mutate(origEr = if_else(origProv == 35, orig_er_on,
-                          if_else(origProv == 24 & origCMA == 505, "TRANS", 
+                          if_else(origProv == 24 & origCMA == 505, "TRANS-QC", 
                                   if_else(origProv == 24 & origCMA == 462, "MTL",
                                           if_else(origProv == 24, "RMQC",
                                                   if_else(origProv == 10 |origProv == 11|origProv == 12|origProv == 13, "ATL","WEST"
@@ -70,7 +70,7 @@ survey_trips = merge(survey_trips, mode_conversion, by = "entryMode")
 
 summary = survey_trips %>%
   group_by(origEr, treso_er, mode) %>%
-  summarise(person_trips = sum(weight)/2)
+  summarise(trips = sum(weight)/2 ,person_trips = sum(weight*partySize)/2)
 
 
 write.table(summary, "clipboard", sep="\t", row.names=F)
@@ -80,7 +80,7 @@ write.table(summary, "clipboard", sep="\t", row.names=F)
 
 folder_model = "C:/models/treso-ldpm/output/"
 
-model_trips = fread(paste(folder_model, "ldpm_trips.csv", sep = ""))
+model_trips = fread(paste(folder_model, "ldpm_trips11calibrated.csv", sep = ""))
 
 model_trips = model_trips %>%
   mutate(weight = if_else(tripState == "away", 0, if_else(tripState == "daytrip" , 1, 0.5)))

@@ -172,10 +172,14 @@ ggplot(allTrips, aes(x=dist, weight=weight, color = as.factor(source))) + stat_e
 
 #get average trip distances
 
-distanceTable = allTrips %>% filter(dist < 2000) %>% group_by(source, purp) %>% summarize(sumW = sum(weight), sumWD = sum(weight*dist))
+
+allTrips$origin2 = if_else(allTrips$origin == "0_S_Ontario" | allTrips$origin =="1_N_Ontario", "ONTARIO", "OTHER" )
+
+
+distanceTable = allTrips %>% filter(dist < 2000, destination== "0_S_Ontario" | destination == "1_N_Ontario") %>% group_by(source, purp, origin2) %>% summarize(sumW = sum(weight), sumWD = sum(weight*dist))
 distanceTable$avgD = distanceTable$sumWD / distanceTable$sumW
 
-print(distanceTable %>% select(source, purp, avgD) %>% tidyr::spread(source, avgD))
+print(distanceTable %>% select(source, purp, origin2, avgD) %>% tidyr::spread(source, avgD))
 
 #MODAL SHARES
 

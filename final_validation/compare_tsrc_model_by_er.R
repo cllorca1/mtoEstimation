@@ -6,7 +6,6 @@ er = fread(path_er)
 
 er_ontario = er %>% filter(type == "ONTARIO")
 
-
 er_by_cd = er_ontario %>% select(cduid, cmauid, treso_er)
 er_by_cd = er_by_cd %>% distinct()
 
@@ -50,7 +49,7 @@ rm(dest_er_aux)
 ##at origin
 tsrc_trips = tsrc_trips %>% rowwise() %>%
   mutate(origEr = if_else(origProvince == 35, orig_er_on,
-                          if_else(origProvince == 24 & origCMA == 505, "TRANS", 
+                          if_else(origProvince == 24 & origCMA == 505, "TRANS-QC", 
                                   if_else(origProvince == 24 & origCMA == 462, "MTL",
                                           if_else(origProvince == 24, "RMQC",
                                           if_else(origProvince == 10 |origProvince == 11|origProvince == 12|origProvince == 13, "ATL","WEST"
@@ -61,7 +60,7 @@ summary(as.factor(tsrc_trips$origEr))
 ##at destination
 tsrc_trips = tsrc_trips %>% rowwise() %>%
   mutate(destEr = if_else(destProvince == 35, dest_er_on,
-                          if_else(destProvince == 24 & destCMA == 505, "TRANS", 
+                          if_else(destProvince == 24 & destCMA == 505, "TRANS-QC", 
                                   if_else(destProvince == 24 & destCMA == 462, "MTL",
                                           if_else(destProvince == 24, "RMQC",
                                           if_else(destProvince == 10 |destProvince == 11|destProvince == 12|destProvince == 13, "ATL","WEST"
@@ -80,19 +79,24 @@ tsrc_trips = merge(tsrc_trips, mode_conversion, by = "mainMode")
 #summarize to compare
 summary = tsrc_trips %>%
   group_by(origEr, destEr, mode) %>%
-  summarise(trips = sum(weightWTEP)/4, person_trips = sum(weightWTTP)/4)
+  summarise(trips = sum(weightWTEP)/4, person_trips = sum(weightWTTP)/4, count = n())
 
 write.table(summary, "clipboard", sep="\t", row.names=F)
 
-
 #MODEL
 
-folder_model = "C:/models/treso-ldpm/output/"
+folder_model = "C:/models/treso-ldpm-clean/output/"
 
 model_trips = fread(paste(folder_model, "ldpm_trips.csv", sep = ""))
 
 model_trips = model_trips %>%
   mutate(weight = if_else(tripState == "away", 0, if_else(tripState == "daytrip" , 1, 0.5)))
+
+zones = list(a = unique(model_trips$tripOriginZone))
+
+zones$is = zones$a %in% er$treso_zone 
+
+zones = data.frame(zones)
 
 #link the ER information
 model_trips = merge(model_trips, er, by.x = "tripOriginZone", by.y = "treso_zone")
@@ -116,5 +120,46 @@ write.table(summary2, "clipboard", sep="\t", row.names=F)
 summary_all = merge(summary, summary2, by.x=c("origEr", "destEr", "mode"), by.y = c("origEr", "destEr", "tripMode"))
 write.table(summary_all, "clipboard", sep="\t", row.names=F)
 
+
+#print out summary table of distances
+summary3 = model_trips %>%
+  group_by(origEr, destEr, tripMode) %>%
+  summarize(distance_level_2 = mean(travelDistanceLvl2), modal_t = mean(travelTimeLevel2ByMode))
+
+write.table(summary3, "clipboard", sep="\t", row.names=F)
+
+#alternatice model trips count to obtain vehicles/parties
+
+folder_model = "C:/models/treso-ldpm-clean/output/"
+
+model_trips = fread(paste(folder_model, "ldpm_trips.csv", sep = ""))
+
+
+#chaged to calculate vehicles
+model_trips2 = model_trips %>%
+  mutate(weight = if_else(tripState == "away", 0, if_else(tripState == "daytrip" , 2, 1)))
+
+zones = list(a = unique(model_trips$tripOriginZone))
+
+zones$is = zones$a %in% er$treso_zone 
+
+zones = data.frame(zones)
+
+#link the ER information
+model_trips2 = merge(model_trips2, er, by.x = "tripOriginZone", by.y = "treso_zone")
+model_trips2$origEr = model_trips2$treso_er
+
+model_trips2 = merge(model_trips2, er, by.x = "destZone", by.y = "treso_zone")
+model_trips2$destEr = model_trips2$treso_er.y
+
+
+#print out summary table of everything
+summary4 = model_trips2 %>%
+  group_by(origEr, destEr, tripMode) %>%
+  summarize(trips = 365 * sum(weight), 
+            person_trips = 365 * sum(hhAdultsTravelParty*weight), 
+            all_person_trips = 365 * sum((hhAdultsTravelParty+hhKidsTravelParty)*weight))
+
+write.table(summary4, "clipboard", sep="\t", row.names=F)
 
 

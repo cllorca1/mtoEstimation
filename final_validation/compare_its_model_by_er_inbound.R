@@ -47,7 +47,7 @@ rm(dest_er_aux)
 
 survey_trips = survey_trips %>% rowwise() %>%
   mutate(destEr = if_else(destPR == 35, orig_er_on,
-                          if_else(destPR == 24 & destCMA == 505, "TRANS", 
+                          if_else(destPR == 24 & destCMA == 505, "TRANS-QC", 
                                   if_else(destPR == 24 & destCMA == 462, "MTL",
                                           if_else(destPR == 24, "RMQC",
                                                   if_else(destPR == 10 |destPR == 11|destPR == 12|destPR == 13, "ATL","WEST"
@@ -82,7 +82,7 @@ write.table(summary, "clipboard", sep="\t", row.names=F)
 
 folder_model = "C:/models/treso-ldpm/output/"
 
-model_trips = fread(paste(folder_model, "ldpm_trips.csv", sep = ""))
+model_trips = fread(paste(folder_model, "ldpm_trips11calibrated.csv", sep = ""))
 
 model_trips = model_trips %>% filter(tripOriginType == "EXTUS", international)
 
