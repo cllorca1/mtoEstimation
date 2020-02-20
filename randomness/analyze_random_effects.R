@@ -87,10 +87,13 @@ for (seed in seeds){
 
 #' ### Number of trips by origin treso zone
 #' 
-#' We take a subsample of 15 zones for visualization purposes.
+#' We take a subsample of size_sample zones for visualization purposes.
+#' 
+
+size_sample = 30
 
 tripOriginZones = unique(trips_by_zone$tripOriginZone)
-tripOriginZonesSample = sample(x = tripOriginZones, size = 15, replace = F)
+tripOriginZonesSample = sample(x = tripOriginZones, size = size_sample, replace = F)
 
 trips_by_zone_sample = trips_by_zone %>% filter(tripOriginZone %in% tripOriginZonesSample)
 
@@ -100,7 +103,7 @@ trips_by_zone_sample = merge(trips_by_zone_sample, averages, by = c("tripOriginZ
 
 
 p1 = ggplot(trips_by_zone_sample, aes(x = as.factor(tripOriginZone), group=tripOriginZone, y = (count - mean)/mean*100)) +
-  stat_boxplot() + facet_grid(case ~ .) + xlab("zones (subset of 15)") + ylab("differences (%)")
+  stat_boxplot() + facet_grid(case ~ .) + xlab("zones (subset of size_sample)") + ylab("differences (%)")
 
 print(p1)
 
@@ -119,7 +122,7 @@ print(p2)
 #Number of trips by origin at ldpm zone
 
 tripOriginCombinedZones = unique(trips_by_ldpm_zone$tripOriginCombinedZone)
-tripOriginCombinedZonesSample = sample(x = tripOriginCombinedZones, size = 15, replace = F)
+tripOriginCombinedZonesSample = sample(x = tripOriginCombinedZones, size = size_sample, replace = F)
 
 trips_by_ldpm_zone_sample = trips_by_ldpm_zone %>% filter(tripOriginCombinedZone %in% tripOriginCombinedZonesSample)
 
@@ -129,7 +132,7 @@ averages = trips_by_ldpm_zone_sample %>% group_by(tripOriginCombinedZone, case) 
 trips_by_ldpm_zone_sample = merge(trips_by_ldpm_zone_sample, averages, by = c("tripOriginCombinedZone", "case"))
 
 p3 = ggplot(trips_by_ldpm_zone_sample, aes(x = as.factor(tripOriginCombinedZone), group=tripOriginCombinedZone, y = (count - mean)/mean*100)) +
-  stat_boxplot() + facet_grid(case ~ .) + xlab("zones (subset of 15)") + ylab("differences (%)")
+  stat_boxplot() + facet_grid(case ~ .) + xlab("zones (subset of size_sample)") + ylab("differences (%)")
 
 print(p3)
 
@@ -144,7 +147,7 @@ print(p4)
 #Number of trips by destination at ldpm zone
 
 tripDestCombinedZones = unique(trips_by_dest_ldpm_zone$tripDestCombinedZone)
-tripDestCombinedZonesSample = sample(x = tripDestCombinedZones, size = 15, replace = F)
+tripDestCombinedZonesSample = sample(x = tripDestCombinedZones, size = size_sample, replace = F)
 
 trips_by_dest_ldpm_zone_sample = trips_by_dest_ldpm_zone %>% filter(tripDestCombinedZone %in% tripDestCombinedZonesSample)
 
@@ -153,7 +156,7 @@ averages = trips_by_dest_ldpm_zone_sample %>% group_by(tripDestCombinedZone, cas
 trips_by_dest_ldpm_zone_sample = merge(trips_by_dest_ldpm_zone_sample, averages, by = c("tripDestCombinedZone", "case"))
 
 p5 = ggplot(trips_by_dest_ldpm_zone_sample, aes(x = as.factor(tripDestCombinedZone), group=tripDestCombinedZone, y = (count - mean)/mean*100)) +
-  stat_boxplot() + facet_grid(case ~ .) + xlab("zones (subset of 15)") + ylab("differences (%)")
+  stat_boxplot() + facet_grid(case ~ .) + xlab("zones (subset of size_sample)") + ylab("differences (%)")
 
 print(p5)
 
@@ -189,7 +192,7 @@ while (highest_iter_same_seed < highest_iter){
 
 p7 = ggplot(trips_by_ldpm_zone_and_mode_sample, aes(x = iteration, fill = as.factor(tripMode), weight = count, width=0)) +
   geom_bar(position = "stack", size = 0) + facet_grid(case ~ tripOriginCombinedZone, scale = "free_x") + 
-  xlab("zones (subset of 15)") + ylab("trips by mode")
+  xlab("zones (subset of size_sample)") + ylab("trips by mode")
 
 print(p7)
 
@@ -198,7 +201,7 @@ print(p7)
 
 p8 = ggplot(trips_by_ldpm_zone_and_mode_sample, aes(x = iteration, fill = as.factor(tripMode), weight = count, width=0)) +
   geom_bar(position = "fill", size = 0) + facet_grid(case ~ tripOriginCombinedZone, scale = "free_x") +
-  xlab("zones (subset of 15)") +
+  xlab("zones (subset of size_sample)") +
   ylab("modal share (%)")
 
 print(p8)
@@ -208,7 +211,7 @@ print(p8)
 #number of trips by destination at TRESO zone
 
 destZones = unique(trips_by_dest_zone$destZone)
-destZonesSample = sample(x = destZones, size = 15, replace = F)
+destZonesSample = sample(x = destZones, size = size_sample, replace = F)
 
 trips_by_dest_zone_sample = trips_by_dest_zone %>% filter(destZone %in% destZonesSample)
 
@@ -217,7 +220,7 @@ averages = trips_by_dest_zone_sample %>% group_by(destZone, case) %>% summarize(
 trips_by_dest_zone_sample = merge(trips_by_dest_zone_sample, averages, by = c("destZone", "case"))
 
 p9 = ggplot(trips_by_dest_zone_sample, aes(x = as.factor(destZone), group=destZone, y = (count - mean)/mean*100)) +
-  stat_boxplot() + facet_grid(case ~ .) + xlab("zones (subset of 15)") + ylab("differences (%)")
+  stat_boxplot() + facet_grid(case ~ .) + xlab("zones (subset of size_sample)") + ylab("differences (%)")
 
 print(p9)
 
