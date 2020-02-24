@@ -2,8 +2,8 @@ pacman::p_load(data.table, dplyr, ggplot2, tidyr, readr)
 
 base_folder = "C:/models/treso-ldpm/output/"
 
-scales = c(0.01, 1)
-scenarios = c("scaled", "unscaled")
+scales = c(0.01,0.01)
+scenarios = c("scaled","scaled_test")
 
 summaries = data.frame()
 
